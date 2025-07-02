@@ -67,7 +67,7 @@ check_and_install_modules
 
 
 echo -e "${BOLD}${YELLOW}[INFO] Checking for required tools...${RESET}"
-check_tool "bughunter-go"
+check_tool "bugscanx-go"
 check_tool "subfinder"
 
 echo -e "${BOLD}${GREEN}[INFO] Installation script completed successfully!${RESET}"
