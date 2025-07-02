@@ -36,14 +36,14 @@ echo 'PATH="$PATH:$HOME/go/bin"' >> $HOME/.bashrc
 source $HOME/.bashrc
 ```
 
-# Install subfinder and bughunter-go
+# Install subfinder and bugscanx-go
 
 ```shell 
 go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
 ```
 
 ```shell
-go install -v github.com/Ayanrajpoot10/bughunter-go@v1.0.2
+go install -v github.com/Ayanrajpoot10/bugscanx-go@latest
 ```
 
 # Clone the repository
