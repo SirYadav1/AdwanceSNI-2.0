@@ -38,7 +38,7 @@ def scan_subdomains_with_bughunter(input_file, output_file, threads):
     try:
         print(f"{BOLD}{YELLOW}Scanning subdomains from: {BLUE}{input_file}{RESET}")
         cmd = [
-            'bughunter-go', 'scan', 'direct', '-f', input_file, '-o', output_file,
+            'bugscanx-go','direct', '-f', input_file, '-o', output_file,
                '-t', str(threads)
         ]
         subprocess.run(cmd, check=True)
