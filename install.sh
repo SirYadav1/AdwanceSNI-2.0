@@ -112,6 +112,24 @@ echo -e "${BOLD}${YELLOW}Run:${RESET} ./run.sh"
 if ! grep -q "alias adwance=" ~/.bashrc; then
     echo -e "${BOLD}${YELLOW}[*] Adding shortcut...${RESET}"
     PWD=$(pwd)
-    echo "alias adwance='cd $PWD && ./run.sh'" >> ~/.bashrc
-    echo -e "${BOLD}${GREEN}[+] Shortcut added! Type 'adwance' to start.${RESET}"
+    ALIAS_CMD="alias adwance='cd $PWD && ./run.sh'"
+    
+    # Add to .bashrc
+    if [ -f "$HOME/.bashrc" ]; then
+        if ! grep -q "alias adwance=" "$HOME/.bashrc"; then
+            echo "$ALIAS_CMD" >> "$HOME/.bashrc"
+        fi
+    else
+        echo "$ALIAS_CMD" >> "$HOME/.bashrc"
+    fi
+
+    # Add to .zshrc (if exists)
+    if [ -f "$HOME/.zshrc" ]; then
+        if ! grep -q "alias adwance=" "$HOME/.zshrc"; then
+            echo "$ALIAS_CMD" >> "$HOME/.zshrc"
+        fi
+    fi
+    
+    echo -e "${BOLD}${GREEN}[+] Shortcut added!${RESET}"
+    echo -e "${BOLD}${CYAN}Please restart Termux or type 'source ~/.bashrc' to use 'adwance' command.${RESET}"
 fi
