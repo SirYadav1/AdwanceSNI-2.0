@@ -118,7 +118,7 @@ def update_scripts():
     clear_terminal()
     try:
         print(f"{BOLD}{BLUE}[*] Updating...{RESET}")
-        command = "cd .. && git fetch --all && git reset --hard origin/main && git log -1 --pretty=format:\"%s\""
+        command = "cd .. && git fetch --all && git reset --hard origin/main && git log -1 --pretty=format:\"%s%ncommit %H%nAuthor: %an%nDate: %ad\""
         subprocess.run(command, shell=True, check=True)
         print(f"{BOLD}{GREEN}[+] Updated successfully!{RESET}")
     except subprocess.CalledProcessError:
