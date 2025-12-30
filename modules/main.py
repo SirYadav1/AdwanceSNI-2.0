@@ -45,11 +45,11 @@ def get_user_info_banner():
     {BOLD}{color}**************************************************{RESET}
     {BOLD}{color}*               USER INFORMATION                 *{RESET}
     {BOLD}{color}**************************************************{RESET}
-    {BOLD}{color}* OS       : {os_info.ljust(16)}                *{RESET}
-    {BOLD}{color}* Date     : {date_str.ljust(16)}                *{RESET}
-    {BOLD}{color}* Time     : {time_str.ljust(16)}                *{RESET}
-    {BOLD}{color}* Timezone : {formatted_timezone.ljust(16)}                *{RESET}
-    {BOLD}{color}* Country  : {country.ljust(16)}                *{RESET}
+    {BOLD}{color}* OS       : {os_info.ljust(16)}                   *{RESET}
+    {BOLD}{color}* Date     : {date_str.ljust(16)}                    *{RESET}
+    {BOLD}{color}* Time     : {time_str.ljust(16)}                    *{RESET}
+    {BOLD}{color}* Timezone : {formatted_timezone.ljust(16)}                   *{RESET}
+    {BOLD}{color}* Country  : {country.ljust(16)}                    *{RESET}
     {BOLD}{color}**************************************************{RESET}
     """
     print(banner)
@@ -60,7 +60,7 @@ def show_banner():
     **************************************************
     *                                                *
     *            AdwanceSNI - Main Menu              *
-    *                  Version: 2.0.4                  *
+    *                  Version: 2.0.4                *
     *           Last Updated: 30 Dec 2025            *
     *                                                *
     **************************************************
