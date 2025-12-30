@@ -116,15 +116,15 @@ echo -e "${BOLD}${YELLOW}Run:${RESET} ./run.sh"
     # Add to .bashrc (Create if missing)
     if ! grep -q "alias adwance=" "$HOME/.bashrc" 2>/dev/null; then
         echo "$ALIAS_CMD" >> "$HOME/.bashrc"
-    fi
+    
 
     # Add to .zshrc (Create if missing)
     if ! grep -q "alias adwance=" "$HOME/.zshrc" 2>/dev/null; then
         echo "$ALIAS_CMD" >> "$HOME/.zshrc"
-    fi
+
     
     echo -e "${BOLD}${GREEN}[+] Shortcut added!${RESET}"
-fi
+
 
 echo
 echo -e "${BOLD}${CYAN}Installation Complete!${RESET}"
