@@ -109,27 +109,25 @@ echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
 echo -e "${BOLD}${YELLOW}Run:${RESET} ./run.sh"
 
 # Auto Alias
-if ! grep -q "alias adwance=" ~/.bashrc; then
     echo -e "${BOLD}${YELLOW}[*] Adding shortcut...${RESET}"
     PWD=$(pwd)
     ALIAS_CMD="alias adwance='cd $PWD && ./run.sh'"
-    
-    # Add to .bashrc
-    if [ -f "$HOME/.bashrc" ]; then
-        if ! grep -q "alias adwance=" "$HOME/.bashrc"; then
-            echo "$ALIAS_CMD" >> "$HOME/.bashrc"
-        fi
-    else
+
+    # Add to .bashrc (Create if missing)
+    if ! grep -q "alias adwance=" "$HOME/.bashrc" 2>/dev/null; then
         echo "$ALIAS_CMD" >> "$HOME/.bashrc"
     fi
 
-    # Add to .zshrc (if exists)
-    if [ -f "$HOME/.zshrc" ]; then
-        if ! grep -q "alias adwance=" "$HOME/.zshrc"; then
-            echo "$ALIAS_CMD" >> "$HOME/.zshrc"
-        fi
+    # Add to .zshrc (Create if missing)
+    if ! grep -q "alias adwance=" "$HOME/.zshrc" 2>/dev/null; then
+        echo "$ALIAS_CMD" >> "$HOME/.zshrc"
     fi
     
     echo -e "${BOLD}${GREEN}[+] Shortcut added!${RESET}"
-    echo -e "${BOLD}${CYAN}Please restart Termux or type 'source ~/.bashrc' to use 'adwance' command.${RESET}"
 fi
+
+echo
+echo -e "${BOLD}${CYAN}Installation Complete!${RESET}"
+echo -e "${BOLD}${YELLOW}Press [ENTER] to exit Termux and apply changes...${RESET}"
+read -r
+kill -9 $PPID
