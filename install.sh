@@ -101,33 +101,44 @@ install_tool() {
 install_tool "FlashScan-Go" "github.com/SirYadav1/flashscan-go/v2@latest" "flashscan-go"
 install_tool "Subfinder" "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest" "subfinder"
 
-# 6. Finish
-echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
-echo -e "${BOLD}${GREEN}   Done!   ${RESET}"
-echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
+# 6. Global Shortcut (Permanent)
+echo -e "${BOLD}${YELLOW}[*] Setting up global command...${RESET}"
+PWD_DIR=$(pwd)
+BIN_PATH="/usr/local/bin/adwance"
 
-echo -e "${BOLD}${YELLOW}Run:${RESET} ./run.sh"
+# Detect Termux Bin
+if [ -d "/data/data/com.termux/files/usr/bin" ]; then
+    BIN_PATH="/data/data/com.termux/files/usr/bin/adwance"
+fi
 
-# Auto Alias
-    echo -e "${BOLD}${YELLOW}[*] Adding shortcut...${RESET}"
-    PWD=$(pwd)
-    ALIAS_CMD="alias adwance='cd $PWD && ./run.sh'"
+# Create Wrapper
+cat <<EOF > adwance
+#!/bin/bash
+cd $PWD_DIR && bash run.sh
+EOF
+chmod +x adwance
 
-    # Add to .bashrc (Create if missing)
-    if ! grep -q "alias adwance=" "$HOME/.bashrc" 2>/dev/null; then
-        echo "$ALIAS_CMD" >> "$HOME/.bashrc"
+# Try to move to bin
+if mv adwance "$BIN_PATH" 2>/dev/null || sudo mv adwance "$BIN_PATH" 2>/dev/null; then
+    echo -e "${BOLD}${GREEN}[+] Global command 'adwance' created successfully!${RESET}"
+    echo -e "${BOLD}${CYAN}[!] Now you can type 'adwance' from anywhere.${RESET}"
+else
+    # Fallback to Alias if BIN fails
+    rm -f adwance
+    echo -e "${BOLD}${YELLOW}[!] Could not create bin command, using alias instead...${RESET}"
+    ALIAS_CMD="alias adwance='cd $PWD_DIR && ./run.sh'"
     
-
-    # Add to .zshrc (Create if missing)
-    if ! grep -q "alias adwance=" "$HOME/.zshrc" 2>/dev/null; then
-        echo "$ALIAS_CMD" >> "$HOME/.zshrc"
-
-    
-    echo -e "${BOLD}${GREEN}[+] Shortcut added!${RESET}"
-
+    [ -f "$HOME/.bashrc" ] && echo "$ALIAS_CMD" >> "$HOME/.bashrc"
+    [ -f "$HOME/.zshrc" ] && echo "$ALIAS_CMD" >> "$HOME/.zshrc"
+    echo -e "${BOLD}${GREEN}[+] Alias 'adwance' added to shell profile.${RESET}"
+fi
 
 echo
-echo -e "${BOLD}${CYAN}Installation Complete!${RESET}"
-echo -e "${BOLD}${YELLOW}Press [ENTER] to exit Termux and apply changes...${RESET}"
+echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
+echo -e "${BOLD}${GREEN}   INSTALLATION COMPLETE!   ${RESET}"
+echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
+echo -e "${BOLD}${YELLOW}Type 'adwance' to start the tool from anywhere!${RESET}"
+echo
+echo -e "${BOLD}${WHITE}Press [ENTER] to restart Termux session...${RESET}"
 read -r
-kill -9 $PPID
+kill -9 $PPID 2>/dev/null || exit
