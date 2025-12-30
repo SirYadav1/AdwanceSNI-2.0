@@ -1,222 +1,276 @@
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from bs4 import BeautifulSoup
 from threading import Lock
 from rich.console import Console
-from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, SpinnerColumn
 import re
 import os
+import math
+import time
 
 console = Console()
 file_write_lock = Lock()
 session = requests.Session()
-DEFAULT_TIMEOUT = 20
+# Set User gent to prevent blocking
+session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"})
+DEFAULT_TIMEOUT = 25
 
-# Function to clear the terminal and display dynamic ASCII banner
+def get_files_dir():
+    # Returns the path to the 'files' directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(current_dir) == 'modules':
+        project_root = os.path.dirname(current_dir)
+    else:
+        project_root = current_dir
+    
+    files_dir = os.path.join(project_root, "files")
+    if not os.path.exists(files_dir):
+        os.makedirs(files_dir, exist_ok=True)
+    return files_dir
+
 def show_banner():
-    os.system("clear")  # Use 'cls' for Windows
-    try:
-        # Get terminal width
-        terminal_width = os.get_terminal_size().columns
-    except OSError:
-        # Fallback to a default width if terminal size cannot be determined
-        terminal_width = 80
+ 
+    os.system("clear") if os.name == "posix" else os.system("cls")
+    banner_lines = [
+        "AdwanceSNI - API Scanner",
+        "v2.0.4",
+        "Updated: 30 Dec 2025"
+    ]
+    console.rule("[bold cyan]" + " | ".join(banner_lines))
 
-    # ASCII Art Banner
-    banner = """
- ╔═══╦╗─╔╦══╗╔═══╗──────╔╗╔╗──╔═══╦═══╦══╗
- ║╔═╗║║─║║╔╗║╚╗╔╗║─────╔╝╚╣║──║╔═╗║╔═╗╠╣╠╝
- ║╚══╣║─║║╚╝╚╗║║║║╔╗╔╗╔╬╗╔╣╚═╗║║─║║╚═╝║║║
- ╚══╗║║─║║╔═╗║║║║║║╚╝╚╝╠╣║║╔╗║║╚═╝║╔══╝║║
- ║╚═╝║╚═╝║╚═╝╠╝╚╝║╚╗╔╗╔╣║╚╣║║║║╔═╗║║──╔╣╠╗
- ╚═══╩═══╩═══╩═══╝─╚╝╚╝╚╩═╩╝╚╝╚╝─╚╩╝──╚══╝
-    """
-    centered_banner = "\n".join(line.center(terminal_width) for line in banner.splitlines())
-    console.print(f"[bold cyan]{centered_banner}[/bold cyan]")
-
-# Validate domain using regex
 def validate_domain(domain):
+    # Checks if domain format is valid
     domain_pattern = re.compile(
-        r"^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$"  # Matches domains like example.com, test.co.uk
+        r"^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$"
     )
     return bool(domain_pattern.match(domain))
 
-# Clean wildcard subdomains (e.g., *.example.com)
 def clean_subdomain(subdomain):
+    # Removes wildcards like *.example.com -> example.com
+    subdomain = subdomain.strip()
     if subdomain.startswith("*."):
-        return subdomain[2:]  # Remove wildcard
+        subdomain = subdomain[2:]
     return subdomain
 
-# Fetch subdomains from CRT.sh
+# --- APIs --
+
 def crtsh_subdomains(domain):
+    """Fetches subdomains for CRT.sh (JSON)."""
     subdomains = set()
-    response = session.get(f"https://crt.sh/?q=%25.{domain}&output=json", timeout=DEFAULT_TIMEOUT)
-    if response.status_code == 200 and response.headers.get('Content-Type') == 'application/json':
-        for entry in response.json():
-            subdomains.update(entry['name_value'].splitlines())
-    return subdomains
-
-# Fetch subdomains from HackerTarget
-def hackertarget_subdomains(domain):
-    subdomains = set()
-    response = session.get(f"https://api.hackertarget.com/hostsearch/?q={domain}", timeout=DEFAULT_TIMEOUT)
-    if response.status_code == 200 and 'text' in response.headers.get('Content-Type', ''):
-        subdomains.update([line.split(",")[0] for line in response.text.splitlines()])
-    return subdomains
-
-# Fetch subdomains from RapidDNS
-def rapiddns_subdomains(domain):
-    subdomains = set()
-    response = session.get(f"https://rapiddns.io/subdomain/{domain}?full=1", timeout=DEFAULT_TIMEOUT)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        for link in soup.find_all('td'):
-            text = link.get_text(strip=True)
-            if text.endswith(f".{domain}"):
-                subdomains.add(text)
-    return subdomains
-
-# Fetch subdomains using AnubisDB
-def anubisdb_subdomains(domain):
-    subdomains = set()
-    response = session.get(f"https://jldc.me/anubis/subdomains/{domain}", timeout=DEFAULT_TIMEOUT)
-    if response.status_code == 200:
-        subdomains.update(response.json())
-    return subdomains
-
-# Fetch subdomains using AlienVault
-def alienvault_subdomains(domain):
-    subdomains = set()
-    response = session.get(f"https://otx.alienvault.com/api/v1/indicators/domain/{domain}/passive_dns", timeout=DEFAULT_TIMEOUT)
-    if response.status_code == 200:
-        for entry in response.json().get("passive_dns", []):
-            subdomains.add(entry.get("hostname"))
-    return subdomains
-
-# Fetch subdomains using URLScan
-def urlscan_subdomains(domain):
-    subdomains = set()
-    url = f"https://urlscan.io/api/v1/search/?q=domain:{domain}"
-    response = session.get(url, timeout=DEFAULT_TIMEOUT)
-    if response.status_code == 200:
-        for result in response.json().get('results', []):
-            page_url = result.get('page', {}).get('domain')
-            if page_url and page_url.endswith(f".{domain}"):
-                subdomains.add(page_url)
-    return subdomains
-
-# Fetch subdomains using provided function
-def fetch_subdomains(source_func, domain):
-    try:
-        return source_func(domain)
-    except Exception as e:
-        console.print(f"[bold red]Error fetching subdomains for {domain} using {source_func.__name__}: {str(e)}[/bold red]")
-        return set()
-
-# Process each domain to fetch subdomains from all sources
-def process_domain(domain, sources, output_file, progress, task_id):
-    subdomains = set()
-    console.print(f"[bold yellow]Fetching subdomains for:[/bold yellow] [bold blue]{domain}[/bold blue]")
-
-    for source in sources:
-        fetched_subdomains = fetch_subdomains(source, domain)
-        cleaned_subdomains = {clean_subdomain(sub) for sub in fetched_subdomains if validate_domain(clean_subdomain(sub))}
-        subdomains.update(cleaned_subdomains)
-        progress.update(task_id, advance=1)
-
-    # Safely write subdomains to file
-    with file_write_lock:
+    url = f"https://crt.sh/?q=%25.{domain}&output=json"
+    
+    for attempt in range(3):
         try:
-            with open(output_file, "a", encoding="utf-8") as file:
-                for subdomain in sorted(subdomains):
-                    file.write(f"{subdomain}\n")
-        except IOError as e:
-            console.print(f"[bold red]Error writing to file: {e}[/bold red]")
-
+            response = session.get(url, timeout=30)
+            if response.status_code == 200:
+                data = response.json()
+                for entry in data:
+                    name_value = entry.get("name_value")
+                    if name_value:
+                        for sub in name_value.split("\n"):
+                            sub = io_clean(sub, domain)
+                            if sub: subdomains.add(sub)
+                break
+            elif response.status_code in [502, 503, 504]:
+                time.sleep(2 * (attempt + 1))
+            else:
+                break
+        except Exception:
+            time.sleep(2)
     return subdomains
 
-# Main function to find subdomains
+def hackertarget_subdomains(domain):
+    """Fetches subdomains from HackerTarget."""
+    subdomains = set()
+    try:
+        response = session.get(f"https://api.hackertarget.com/hostsearch/?q={domain}", timeout=DEFAULT_TIMEOUT)
+        if response.status_code == 200 and 'text' in response.headers.get('Content-Type', ''):
+            for line in response.text.splitlines():
+                parts = line.split(",")
+                if parts:
+                    sub = io_clean(parts[0], domain)
+                    if sub: subdomains.add(sub)
+    except Exception:
+        pass
+    return subdomains
+
+def rapiddns_subdomains(domain):
+    """Fetches subdomains from RapidDNS (with pagination)."""
+    subdomains = set()
+    try:
+        url = f"https://rapiddns.io/subdomain/{domain}?full=1" 
+        response = session.get(url, timeout=DEFAULT_TIMEOUT)
+        if response.status_code != 200:
+            return subdomains
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Page 1
+        for link in soup.find_all('td'):
+            sub = io_clean(link.get_text(strip=True), domain)
+            if sub: subdomains.add(sub)
+
+        # Pagination logic
+        total_count = 0
+        count_span = soup.find('span', style="color: #39cfca; ")
+        if count_span:
+            try:
+                total_count = int(count_span.get_text(strip=True))
+            except ValueError:
+                pass
+        
+        if total_count > 100:
+            total_pages = min(math.ceil(total_count / 100), 50) # Cap at 50 pages
+            
+            for page in range(2, total_pages + 1):
+                try:
+                    p_response = session.get(f"https://rapiddns.io/subdomain/{domain}?page={page}", timeout=20)
+                    if p_response.status_code == 200:
+                        p_soup = BeautifulSoup(p_response.text, 'html.parser')
+                        for link in p_soup.find_all('td'):
+                            sub = io_clean(link.get_text(strip=True), domain)
+                            if sub: subdomains.add(sub)
+                except Exception:
+                    continue 
+                time.sleep(0.5)
+        
+    except Exception:
+        pass
+    return subdomains
+
+def anubisdb_subdomains(domain):
+    """Fetches subdomains from AnubisDB."""
+    subdomains = set()
+    try:
+        response = session.get(f"https://jldc.me/anubis/subdomains/{domain}", timeout=DEFAULT_TIMEOUT)
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                for sub in data:
+                    clean = io_clean(sub, domain)
+                    if clean: subdomains.add(clean)
+            except:
+                pass
+    except Exception:
+        pass
+    return subdomains
+
+def webarchive_subdomains(domain):
+    """Fetches subdomains from WebArchive."""
+    subdomains = set()
+    try:
+        url = f"http://web.archive.org/cdx/search/cdx?url=*.{domain}/*&output=text&fl=original&collapse=urlkey"
+        response = session.get(url, timeout=40)
+        if response.status_code == 200:
+            for line in response.text.splitlines():
+                if domain in line:
+                    parts = re.findall(r'(?:[a-zA-Z0-9-]+\.)+' + re.escape(domain), line)
+                    for part in parts:
+                        sub = io_clean(part, domain)
+                        if sub: subdomains.add(sub)
+    except Exception:
+        pass
+    return subdomains
+
+def io_clean(item, domain):
+    """Helper to validate found items."""
+    item = clean_subdomain(item)
+    if item.endswith(f".{domain}") and validate_domain(item):
+        return item
+    return None
+
+def process_domain(domain, sources, output_file, progress, task_id):
+    # Runs all APIs in parallel for a domain
+    all_subdomains = set()
+    console.print(f"\n[bold yellow]Target:[/bold yellow] [bold cyan]{domain}[/bold cyan]")
+    
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_api = {executor.submit(source, domain): source.__name__ for source in sources}
+        
+        for future in as_completed(future_to_api):
+            api_name = future_to_api[future].replace('_subdomains', '').title()
+            try:
+                results = future.result()
+                count = len(results)
+                all_subdomains.update(results)
+                
+                if count > 0:
+                    console.print(f"  [green]✔ {api_name}: {count}[/green]")
+                else:
+                    console.print(f"  [dim]• {api_name}: 0[/dim]")
+                    
+                progress.update(task_id, advance=1)
+            except Exception:
+                console.print(f"  [red]✘ {api_name}: Failed[/red]")
+
+    # Save to file
+    if all_subdomains:
+        with file_write_lock:
+            try:
+                with open(output_file, "a", encoding="utf-8") as file:
+                    for subdomain in sorted(all_subdomains):
+                        file.write(f"{subdomain}\n")
+            except IOError:
+                pass
+                
+    return len(all_subdomains)
+
 def find_subdomains():
-    # Show the dynamic ASCII banner
     show_banner()
 
     sources = [
-        crtsh_subdomains, hackertarget_subdomains, rapiddns_subdomains,
-        anubisdb_subdomains, alienvault_subdomains, urlscan_subdomains
+        anubisdb_subdomains,
+        hackertarget_subdomains,
+        rapiddns_subdomains,
+        crtsh_subdomains,
+        webarchive_subdomains
     ]
 
-    console.print("[bold yellow][1] Single domain[/bold yellow]")
-    console.print("[bold yellow][2] Multiple domains[/bold yellow]")
+    console.print("[yellow][1] Single Domain[/yellow]")
+    console.print("[yellow][2] File List[/yellow]")
+    choice = console.input("[green]Option: [/green]").strip()
 
-    console.print("[bold green]» Enter your choice: [/bold green]", end="")
-    choice = input().strip()
-
-    # Handle single domain input
+    domains = []
     if choice == '1':
-        console.print("[bold green]» Enter domain: [/bold green]", end="")
-        domain = input().strip()
-        if not domain or not validate_domain(domain):
-            console.print("[bold red]⚠ Invalid domain format or empty domain.[/bold red]")
-            return
-        domains = [domain]
-
-    # Handle multiple domains input from file
+        domain = console.input("[green]Domain: [/green]").strip()
+        if validate_domain(domain): domains = [domain]
     elif choice == '2':
-        console.print("[bold green]» Enter file path: [/bold green]", end="")
-        file_path = input().strip()
-        if not os.path.exists(file_path):
-            console.print("[bold red]⚠ File not found.[/bold red]")
-            return
-        try:
-            with open(file_path, "r") as file:
-                domains = [line.strip() for line in file if line.strip()]
-        except Exception as e:
-            console.print(f"[bold red]⚠ Error reading file: {e}[/bold red]")
-            return
-
+        path = console.input("[green]File Path: [/green]").strip()
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                domains = [l.strip() for l in f if l.strip()]
     else:
-        console.print("[bold red]⚠ Invalid choice.[/bold red]")
         return
 
-    # Ask user for output file name
-    console.print("[bold green]» Enter output file name (without extension): [/bold green]", end="")
-    output_file_name = input().strip()
-    if not output_file_name:
-        console.print("[bold red]⚠ Output file name cannot be empty.[/bold red]")
-        return
+    if not domains: return
 
-    # Define output file path
-    output_directory = "/storage/emulated/0/"  # Use this directory
-    output_file = os.path.join(output_directory, f"{output_file_name}.txt")
+    fname = console.input("[green]Output Filename: [/green]").strip()
+    if not fname: return
+    
+    output_file = os.path.join(get_files_dir(), f"{fname}.txt")
 
-    console.print(f"[bold yellow]Starting subdomain finding...[/bold yellow]")
-    total_tasks = len(domains) * len(sources)
-    total_subdomains = 0
+    console.print(f"\n[bold]Scanning {len(domains)} targets...[/bold]")
 
-    # Use the rich library's Progress bar for real-time feedback
+    total_subs = 0
     with Progress(
+        SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
-        TextColumn("[bold blue]{task.completed}/{task.total}"),
+        TextColumn("[bold blue]{task.completed}/{task.total} APIs"),
         TimeElapsedColumn(),
         console=console,
     ) as progress:
-        task_id = progress.add_task("Processing", total=total_tasks)
+        
+        for domain in domains:
+            task_id = progress.add_task(f"Scanning {domain}...", total=len(sources), visible=True)
+            subs = process_domain(domain, sources, output_file, progress, task_id)
+            total_subs += subs
+            progress.update(task_id, completed=len(sources))
 
-        # Execute subdomain fetching concurrently
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {
-                executor.submit(process_domain, domain, sources, output_file, progress, task_id): domain for domain in domains
-            }
-            for future in as_completed(futures):
-                total_subdomains += len(future.result())
-
-    console.print(f"\n[bold green] Subdomains saved in {output_file}[/bold green]")
-    console.print(f"[bold green] Total subdomains found: {total_subdomains}[/bold green]")
-
-    # Pause before exiting
-    input(f"\nPress Enter to exit...")
+    console.print(f"\n[bold green]Done! Total Found: {total_subs}[/bold green]")
+    console.print(f"[bold yellow]Saved to: {output_file}[/bold yellow]")
+    console.input("\nPress Enter to exit...")
 
 if __name__ == "__main__":
     find_subdomains()

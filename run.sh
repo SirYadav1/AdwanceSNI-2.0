@@ -17,16 +17,22 @@ cd modules || {
 }
 
 
-if ! command -v python &>/dev/null; then
+if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
     echo -e "${BOLD}${RED}[ERROR] Python is not installed. Please install Python to proceed.${RESET}"
     exit 1
 fi
 
+# Detect python command
+if command -v python3 &>/dev/null; then
+    PYTHON_CMD=python3
+else
+    PYTHON_CMD=python
+fi
 
 echo -e "${BOLD}${YELLOW}[INFO] Launching the main application...${RESET}"
 sleep 1
 
-python main.py
+"$PYTHON_CMD" main.py
 
 # Completion Message
 if [ $? -eq 0 ]; then

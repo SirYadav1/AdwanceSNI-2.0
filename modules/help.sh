@@ -1,21 +1,21 @@
 #!/bin/bash
 clear
-echo -e "\033[1;32m========= HELP SECTION ==============================\033[0m"
-echo -e "\033[1;33mWelcome to AdwanceSNI 2.0 Help Section!\033[0m"
+echo -e "\033[1;32m========= HELP =========\033[0m"
+echo -e "\033[1;33mAdwanceSNI 2.0.4 Guide\033[0m"
 echo
-echo -e "\033[1;31m\033[1m1. Find Subdomains:\033[0m Find subdomains for \na given domain using different methods."
-echo -e "\033[1;31m\033[1m2. Scan Hosts:\033[0m Scan hosts for vulnerabilities \nand gather information."
-echo -e "\033[1;31m\033[1m3. Extract IP/Domain:\033[0m Extract IPs or domains \nfrom your input data."
-echo -e "\033[1;31m\033[1m4. IP Generator:\033[0m Generate random IP addresses \nfor testing purposes."
-echo -e "\033[1;31m\033[1m5. Update Scripts:\033[0m Keep your scripts up to date \nwith the latest features."
-echo -e "\033[1;31m\033[1m6. Help:\033[0m Display this help section for information\n about the tools."
-echo -e "\033[1;31m\033[1m7. Exit Program:\033[0m Exit the program and return to \nyour terminal."
+echo -e "\033[1;31m\033[1m1. Find Subdomains:\033[0m Discover subdomains using\nmultiple fast methods."
+echo -e "\033[1;31m\033[1m2. Scan Hosts:\033[0m Check hosts for bugs\nand gather info."
+echo -e "\033[1;31m\033[1m3. IP/Domain Clean:\033[0m Extract/Clean IPs & Domains\nfrom raw text."
+echo -e "\033[1;31m\033[1m4. IP Generator:\033[0m Create random IPs ranges\nfor testing."
+echo -e "\033[1;31m\033[1m5. Update:\033[0m Get latest script version."
+echo -e "\033[1;31m\033[1m6. Splitter:\033[0m Split huge files into\nsmaller parts."
+echo -e "\033[1;31m\033[1m7. Help:\033[0m Show this info."
+echo -e "\033[1;31m\033[1m8. Exit:\033[0m Close program."
 echo
-echo -e "\033[1;36mFor more information, support, or updates, join the \nofficial Telegram Channel:\033[0m"
-echo -e "\033[1;35mTelegram Channel: @AdwanceSNI\033[0m"
-echo -e "\033[1;35mTelegram Username: @SirYadav\033[0m"
-echo -e "\033[1;32m=====================================================\033[0m"
+echo -e "\033[1;36mOfficial Channel:\033[0m"
+echo -e "\033[1;35m@AdwanceSNI\033[0m"
+echo -e "\033[1;35m@SirYadav\033[0m"
+echo -e "\033[1;32m========================\033[0m"
 echo
-echo -e "\033[1;33mPress any key to return to the main menu...\033[0m"
+echo -e "\033[1;33mPress any key...\033[0m"
 read -n 1 -s
-

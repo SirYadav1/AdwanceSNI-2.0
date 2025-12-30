@@ -1,12 +1,12 @@
 import subprocess
 import os
-import threading
 import random
 import platform
 from datetime import datetime
 import pytz
+import sys
 
-# Color definitions
+
 RESET = "\033[0m"
 BOLD = "\033[1m"
 LIGHT_GREEN = "\033[92m"
@@ -21,182 +21,181 @@ WHITE = "\033[97m"
 ORANGE = "\033[38;5;208m"
 PINK = "\033[38;5;206m"
 
+# List of colors for random selection
 COLORS = [LIGHT_GREEN, RED, BLUE, YELLOW, GREEN, PURPLE, CYAN, WHITE, ORANGE, PINK]
 
-write_lock = threading.Lock()
-
 def get_user_info_banner():
+    # Gather system information
     os_info = platform.system()
-    version_info = platform.version()
-    android_version = platform.release()
-
+    
+    #current time and date
     current_time = datetime.now()
     date_str = current_time.strftime('%Y-%m-%d')
     time_str = current_time.strftime('%H:%M:%S')
     
+    # Set timezone to India (Asia/Kolkata)
     timezone = datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Z %z')
     formatted_timezone = timezone[:-2] + ":" + timezone[-2:]
 
     country = "India"
-    total_width = 36
-
+    
+   
     color = random.choice(COLORS)
     banner = f"""
-    {BOLD}{color}╔{'═' * total_width}╗{RESET}
-    {BOLD}{color}║        USER INFORMATION            ║{RESET}
-    {BOLD}{color}╠{'═' * total_width}╣{RESET}
-    {BOLD}{color}║ OS       : {os_info.ljust(16)}        ║{RESET}
-    {BOLD}{color}║ Date     : {date_str.ljust(16)}        ║{RESET}
-    {BOLD}{color}║ Time     : {time_str.ljust(16)}        ║{RESET}
-    {BOLD}{color}║ Timezone : {formatted_timezone.ljust(16)}        ║{RESET}
-    {BOLD}{color}║ Country  : {country.ljust(16)}        ║{RESET}
-    {BOLD}{color}╚{'═' * total_width}╝{RESET}
+    {BOLD}{color}**************************************************{RESET}
+    {BOLD}{color}*               USER INFORMATION                 *{RESET}
+    {BOLD}{color}**************************************************{RESET}
+    {BOLD}{color}* OS       : {os_info.ljust(16)}                *{RESET}
+    {BOLD}{color}* Date     : {date_str.ljust(16)}                *{RESET}
+    {BOLD}{color}* Time     : {time_str.ljust(16)}                *{RESET}
+    {BOLD}{color}* Timezone : {formatted_timezone.ljust(16)}                *{RESET}
+    {BOLD}{color}* Country  : {country.ljust(16)}                *{RESET}
+    {BOLD}{color}**************************************************{RESET}
     """
     print(banner)
 
 def show_banner():
+    
     banner = f"""
-    ╔══════════════════════════════════╗
-    ║  Welcome to AdwanceSNI 2.0       ║
-    ╠══════════════════════════════════╣
-    ║ Coded by    : YADAV              ║
-    ║ Design by   : AMITH              ║
-    ║ Telegram    : @SirYadav          ║
-    ║ Version     : 2.3                ║
-    ╚══════════════════════════════════╝
+    **************************************************
+    *                                                *
+    *            AdwanceSNI - Main Menu              *
+    *                  Version: 2.0.4                  *
+    *           Last Updated: 30 Dec 2025            *
+    *                                                *
+    **************************************************
     """
     color = random.choice(COLORS)
     print(f"{BOLD}{color}{banner}{RESET}")
     get_user_info_banner()
 
 def clear_terminal():
+    
     try:
         os.system('cls' if os.name == 'nt' else 'clear')
         show_banner()
     except Exception as e:
-        print(f"{BOLD}{RED}[WARNING]{RESET} Unable to clear terminal. {e}")
+        print(f"{BOLD}{RED}[!] Clear failed: {e}{RESET}")
 
 def show_menu():
+    
     menu = f"""
     {BOLD}{LIGHT_GREEN}=============================={RESET}
-    {BOLD}{YELLOW}[1]{RESET} - Find Subdomain
-    {BOLD}{YELLOW}[2]{RESET} - Scan host's
+    {BOLD}{YELLOW}[1]{RESET} - Find Subdomains
+    {BOLD}{YELLOW}[2]{RESET} - Scan Hosts
     {BOLD}{YELLOW}[3]{RESET} - Extract IP/Domain
-    {BOLD}{YELLOW}[4]{RESET} - IP Generator
-    {BOLD}{YELLOW}[5]{RESET} - Update Scripts
-    {BOLD}{YELLOW}[6]{RESET} - Help
-    {BOLD}{RED}[7]{RESET} - Exit Program
+    {BOLD}{YELLOW}[4]{RESET} - Generate IPs
+    {BOLD}{YELLOW}[5]{RESET} - Update Tool
+    {BOLD}{YELLOW}[6]{RESET} - Split Files
+    {BOLD}{YELLOW}[7]{RESET} - Help
+    {BOLD}{RED}[8]{RESET} - Exit
     {BOLD}{LIGHT_GREEN}=============================={RESET}
     """
     print(menu)
 
 def show_subdomain_menu():
+    # Subdomain  options
     menu = f"""
     {BOLD}{LIGHT_GREEN}=============================={RESET}
-    {BOLD}{YELLOW}[1]{RESET} - Find subdomains with Subfinder
-    {BOLD}{YELLOW}[2]{RESET} - Find subdomains with API
+    {BOLD}{YELLOW}[1]{RESET} - Use Subfinder (Fast)
+    {BOLD}{YELLOW}[2]{RESET} - Use API Scanner (Deep)
     {BOLD}{LIGHT_GREEN}=============================={RESET}
     """
     print(menu)
 
 def show_scan_host_menu():
+    # Scanner options
     menu = f"""
     {BOLD}{LIGHT_GREEN}=============================={RESET}
-    {BOLD}{YELLOW}[1]{RESET} - Scan host with Bughunter
-    {BOLD}{YELLOW}[2]{RESET} - Scan host with Normal Scanner
+    {BOLD}{YELLOW}[1]{RESET} - FlashScan (Recommended)
+    {BOLD}{YELLOW}[2]{RESET} - Normal Scanner (Standard)
     {BOLD}{LIGHT_GREEN}=============================={RESET}
     """
     print(menu)
 
 def update_scripts():
+   
     clear_terminal()
     try:
-        print(f"{BOLD}{BLUE}Updating scripts...{RESET}")
+        print(f"{BOLD}{BLUE}[*] Updating...{RESET}")
         command = "git pull origin main && git log -1"
         subprocess.run(command, shell=True, check=True)
-        print(f"{BOLD}{GREEN}Scripts updated successfully!{RESET}")
-    except subprocess.CalledProcessError as e:
-        print(f"{BOLD}{RED}Failed to update scripts!{RESET}")
-        print(f"{BOLD}{RED}Error Details: {e}{RESET}")
-    except FileNotFoundError:
-        print(f"{BOLD}{RED}Error: Directory 'AdwanceSNI-2.0' not found. Ensure it exists.{RESET}")
+        print(f"{BOLD}{GREEN}[+] Updated successfully!{RESET}")
+    except subprocess.CalledProcessError:
+        print(f"{BOLD}{RED}[!] Update failed.{RESET}")
     except Exception as e:
-        print(f"{BOLD}{RED}An unexpected error occurred: {e}{RESET}")
+        print(f"{BOLD}{RED}[!] Error: {e}{RESET}")
 
 def help_module():
+   
     clear_terminal()
     try:
-        print(f"{BOLD}{GREEN}Executing help.sh script...{RESET}")
-        subprocess.run(["bash", "help.sh"], check=True)  # help.sh ko execute karna
-    except FileNotFoundError:
-        print(f"{BOLD}{RED}Error: 'help.sh' file not found!{RESET}")
-    except subprocess.CalledProcessError as e:
-        print(f"{BOLD}{RED}Error: Unable to execute help.sh!{RESET}")
-        print(f"{BOLD}{RED}Details: {e}{RESET}")
+        print(f"{BOLD}{GREEN}[*] Opening help...{RESET}")
+        subprocess.run(["bash", "help.sh"], check=True)
     except Exception as e:
-        print(f"{BOLD}{RED}An unexpected error occurred: {e}{RESET}")
+        print(f"{BOLD}{RED}[!] Failed to open help: {e}{RESET}")
 
 def main():
+    # Main program loop
     clear_terminal()
     while True:
         show_menu()
-        choice = input(f"{BOLD}{SKY_BLUE}Choose an option (1-7): {RESET}").strip()
+        choice = input(f"{BOLD}{SKY_BLUE}Option (1-8): {RESET}").strip()
 
         if choice == "1":
             clear_terminal()
             show_subdomain_menu()
-            sub_choice = input(f"{BOLD}{SKY_BLUE}Choose an option (1-2): {RESET}").strip()
+            sub_choice = input(f"{BOLD}{SKY_BLUE}Select (1-2): {RESET}").strip()
 
             if sub_choice == "1":
                 clear_terminal()
-                print(f"{BOLD}{GREEN}Running Subfinder...{RESET}")
-                subprocess.run(["python", "subfinder.py"])
+                subprocess.run([sys.executable, "subfinder.py"])
             elif sub_choice == "2":
                 clear_terminal()
-                print(f"{BOLD}{GREEN}Running Subdomain API lookup...{RESET}")
-                subprocess.run(["python", "api_subd.py"])
+                subprocess.run([sys.executable, "api_subd.py"])
             else:
-                print(f"{BOLD}{RED}Invalid choice! Returning to main menu.{RESET}")
+                print(f"{BOLD}{RED}[!] Invalid choice.{RESET}")
 
         elif choice == "2":
             clear_terminal()
             show_scan_host_menu()
-            sub_choice = input(f"{BOLD}{SKY_BLUE}Choose an option (1-2): {RESET}").strip()
+            sub_choice = input(f"{BOLD}{SKY_BLUE}Select (1-2): {RESET}").strip()
 
             if sub_choice == "1":
                 clear_terminal()
-                print(f"{BOLD}{GREEN}Running Bughunter Scanner...{RESET}")
-                subprocess.run(["python", "bughunter_scanner.py"])
+                # Runs the FlashScan 
+                subprocess.run([sys.executable, "flashscan_scanner.py"])
             elif sub_choice == "2":
                 clear_terminal()
-                print(f"{BOLD}{GREEN}Running Normal Scanner...{RESET}")
-                subprocess.run(["python", "normal_scanner.py"])
+                subprocess.run([sys.executable, "normal_scanner.py"])
             else:
-                print(f"{BOLD}{RED}Invalid choice! Returning to main menu.{RESET}")
+                print(f"{BOLD}{RED}[!] Invalid choice.{RESET}")
 
         elif choice == "3":
             clear_terminal()
-            print(f"{BOLD}{GREEN}Running IP/Domain Extractor...{RESET}")
-            subprocess.run(["python", "ip_domain_extractor.py"])
+            subprocess.run([sys.executable, "ip_domain_cleaner.py"])
 
         elif choice == "4":
             clear_terminal()
-            print(f"{BOLD}{GREEN}Running IP Generator...{RESET}")
-            subprocess.run(["python", "ip_generator.py"])
+            subprocess.run([sys.executable, "ip_generator.py"])
 
         elif choice == "5":
             update_scripts()
 
         elif choice == "6":
-            help_module()
+            clear_terminal()
+            subprocess.run([sys.executable, "file_splitter.py"])
 
         elif choice == "7":
+            help_module()
+
+        elif choice == "8":
             clear_terminal()
-            print(f"{BOLD}{RED}Exiting program...{RESET}")
+            print(f"{BOLD}{RED}Bye!{RESET}")
             break
 
         else:
-            print(f"{BOLD}{RED}Invalid option! Please select a valid option.{RESET}")
+            print(f"{BOLD}{RED}[!] Invalid option.{RESET}")
 
 if __name__ == "__main__":
     main()

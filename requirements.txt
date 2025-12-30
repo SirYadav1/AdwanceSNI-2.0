@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+rich
+colorama
+tqdm
+aiohttp
+aiofiles
+psutil
+pytz

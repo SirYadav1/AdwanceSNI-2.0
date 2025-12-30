@@ -2,7 +2,7 @@
 AdwanceSNI 2.0 is the enhanced version of the original AdwanceSNI program, designed to provide a comprehensive suite for network scanning and subdomain discovery. It retains the core functionalities of finding subdomains and scanning hosts while introducing new tools for IP extraction, IP generation, and a lite scanner.
 
 
-<strong><em>AdwanceSNI 2.0 is built using Ayan Rajput's prebuilt tools – bughunter-go, normal scanner, and subdomain discovery (API). These tools handle subdomain discovery and host scanning, forming the core of the project.</em></strong>
+<strong><em>AdwanceSNI 2.0 is built using advanced prebuilt tools – FlashScan-Go, normal scanner, and subdomain discovery (API). These tools handle subdomain discovery and host scanning, forming the core of the project.</em></strong>
 
 <strong><em>Credit goes to Ayan Rajput for his valuable contributions🤝.</em></strong>
 
@@ -36,14 +36,14 @@ echo 'PATH="$PATH:$HOME/go/bin"' >> $HOME/.bashrc
 source $HOME/.bashrc
 ```
 
-# Install subfinder and bugscanx-go
+# Install subfinder and flashscan-go
 
 ```shell 
 go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
 ```
 
 ```shell
-go install -v github.com/Ayanrajpoot10/bugscanx-go@latest
+go install -v github.com/SirYadav1/flashscan-go@latest
 ```
 
 # Clone the repository
@@ -69,9 +69,9 @@ bash run.sh
 ## Author Information
 
 **Author**: YADAV<br>
-**Tools**: bughunter-go, Normal Scanner, Subdomain API – <b style="color:red;">by Ayan Rajput</b>  
+**Tools**: Normal Scanner, Subdomain API – by Ayan Rajput
 **Coded by**: YADAV  
 **Design by**: Amith<br>
 **Contact**: siryadav025@gamil.com<br>
 **Telegram**: [@SirYadav](https://t.me/SirYadav)  
-**Version**: 2.2
+**Version**: 2.0.4
