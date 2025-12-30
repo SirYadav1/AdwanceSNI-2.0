@@ -118,7 +118,7 @@ def update_scripts():
     clear_terminal()
     try:
         print(f"{BOLD}{BLUE}[*] Updating...{RESET}")
-        command = "git pull origin main && git log -1"
+        command = "cd .. && git pull origin main && git log -1"
         subprocess.run(command, shell=True, check=True)
         print(f"{BOLD}{GREEN}[+] Updated successfully!{RESET}")
     except subprocess.CalledProcessError:
