@@ -50,9 +50,9 @@ def get_user_info_banner():
     date_str = current_time.strftime('%Y-%m-%d')
     time_str = current_time.strftime('%H:%M:%S')
     
-    # Set timezone to India (Asia/Kolkata)
-    timezone = datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Z %z')
-    formatted_timezone = timezone[:-2] + ":" + timezone[-2:]
+    # Hardcoded timezone for India (Asia/Kolkata)
+    timezone = "IST +0530"
+    formatted_timezone = "IST +05:30"
 
     country = "India"
     
