@@ -3,6 +3,7 @@ import os
 import threading
 import sys
 import platform
+import shutil
 
 def setup_environment():
     # Add Go binary paths to the current process PATH
@@ -60,12 +61,19 @@ def display_banner():
     print(banner)
 
 def scan_subdomains_with_flashscan(input_file, output_file, threads):
-    # Executes the external 'flashscan-go' binary
+    # Locate flashscan binary (flashscan-go or flashscan) using PATH
+    binary = shutil.which('flashscan-go')
+    if not binary:
+        binary = shutil.which('flashscan')
+    if not binary:
+        print(f"\n{BOLD}{RED}[!] Error: flashscan-go/flashscan not installed.{RESET}")
+        print(f"{BOLD}{YELLOW}Run: go install github.com/SirYadav1/flashscan-go/v2@latest{RESET}")
+        return
     try:
         print(f"{BOLD}{YELLOW}[*] Scanning: {BLUE}{input_file}{RESET}")
         cmd = [
-            'flashscan-go', 'direct', 
-            '-f', input_file, 
+            binary, 'direct',
+            '-f', input_file,
             '-o', output_file,
             '-t', str(threads)
         ]
@@ -73,15 +81,6 @@ def scan_subdomains_with_flashscan(input_file, output_file, threads):
         print(f"\n{BOLD}{GREEN}[+] Done! Saved to: {output_file}{RESET}")
     except subprocess.CalledProcessError as e:
         print(f"\n{BOLD}{RED}[!] Scan Error: {e}{RESET}")
-    except FileNotFoundError:
-        # Try one more time with 'flashscan' instead of 'flashscan-go'
-        try:
-            cmd[0] = 'flashscan'
-            subprocess.run(cmd, check=True)
-            print(f"\n{BOLD}{GREEN}[+] Done! Saved to: {output_file}{RESET}")
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            print(f"\n{BOLD}{RED}[!] Error: 'flashscan-go' or 'flashscan' not found.{RESET}")
-            print(f"{BOLD}{YELLOW}Run: go install github.com/SirYadav1/flashscan-go/v2@latest{RESET}")
 
 def main():
     setup_environment()

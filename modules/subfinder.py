@@ -5,6 +5,7 @@ import asyncio
 import random
 import aiofiles
 import platform
+import shutil
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 import psutil
@@ -28,6 +29,23 @@ PINK = "\033[38;5;206m"
 
 # Thread lock for safe file writing
 write_lock = threading.Lock()
+
+def setup_environment():
+    # Add Go binary paths to the current process PATH
+    home = os.path.expanduser("~")
+    go_paths = [
+        os.path.join(home, "go", "bin"),
+        os.path.join(home, ".go", "bin"),
+        "/usr/local/go/bin",
+        "/data/data/com.termux/files/usr/bin"
+    ]
+    
+    current_path = os.environ.get('PATH', '')
+    for path in go_paths:
+        if os.path.exists(path) and path not in current_path:
+            current_path += os.pathsep + path
+    
+    os.environ['PATH'] = current_path
 
 def get_files_dir():
     # Returns the path to the 'files' directory
@@ -74,12 +92,12 @@ async def read_domains(file_name):
         domains = await file.readlines()
     return [domain.strip() for domain in domains]
 
-async def get_subdomains_subfinder(domain, output_file):
+async def get_subdomains_subfinder(domain, output_file, binary_path):
     # Runs subfinder for  single domain
     try:
         print(f"{BOLD}{YELLOW}[*] Fetching: {BLUE}{domain}{RESET}")
         process = await asyncio.create_subprocess_exec(
-            'subfinder', '-d', domain, '-silent',
+            binary_path, '-d', domain, '-silent',
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
@@ -111,9 +129,17 @@ def batch_domains(domains, batch_size=20):
         yield domains[i:i + batch_size]
 
 async def main():
+    setup_environment()
     print_banner()
     cpu_count, memory = get_system_resources()
     workers, batch_size = calculate_optimal_config(cpu_count, memory)
+
+    # Resolve subfinder binary
+    binary_path = shutil.which('subfinder')
+    if not binary_path:
+        print(f"{BOLD}{RED}[!] Error: subfinder not found in PATH.{RESET}")
+        print(f"{BOLD}{YELLOW}[*] Please install it with: go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest{RESET}")
+        return
 
     # Get Input File
     input_file = input(f"{BOLD}{LIGHT_GREEN}[?] Domain File: {RESET}").strip()
@@ -143,7 +169,7 @@ async def main():
         task = progress.add_task("[cyan]Scanning...", total=total_domains)
         with ProcessPoolExecutor(max_workers=workers) as executor:
             for domain_batch in batch_domains(domains, batch_size):
-                tasks = [get_subdomains_subfinder(domain, output_file) for domain in domain_batch]
+                tasks = [get_subdomains_subfinder(domain, output_file, binary_path) for domain in domain_batch]
                 results = await asyncio.gather(*tasks)
                 total_subdomains += sum(results)
                 progress.update(task, advance=len(domain_batch))
