@@ -152,6 +152,20 @@ def help_module():
     except Exception as e:
         print(f"{BOLD}{RED}[!] Failed to open help: {e}{RESET}")
 
+def run_subprocess_module(script_name):
+    """Helper function to run subprocess modules and wait for completion"""
+    clear_terminal()
+    try:
+        # Run subprocess and wait for it to complete
+        result = subprocess.run([sys.executable, script_name], check=False)
+    except KeyboardInterrupt:
+        print(f"\n{BOLD}{YELLOW}[!] Interrupted by user{RESET}")
+    except Exception as e:
+        print(f"{BOLD}{RED}[!] Error running {script_name}: {e}{RESET}")
+    finally:
+        # Always clear and redraw menu after subprocess completes
+        clear_terminal()
+
 def main():
     # Main program loop
     clear_terminal()
@@ -165,11 +179,9 @@ def main():
             sub_choice = input(f"{BOLD}{SKY_BLUE}Select (1-2): {RESET}").strip()
 
             if sub_choice == "1":
-                clear_terminal()
-                subprocess.run([sys.executable, "subfinder.py"])
+                run_subprocess_module("subfinder.py")
             elif sub_choice == "2":
-                clear_terminal()
-                subprocess.run([sys.executable, "api_subd.py"])
+                run_subprocess_module("api_subd.py")
             else:
                 print(f"{BOLD}{RED}[!] Invalid choice.{RESET}")
 
@@ -179,26 +191,20 @@ def main():
             sub_choice = input(f"{BOLD}{SKY_BLUE}Select (1-2): {RESET}").strip()
 
             if sub_choice == "1":
-                clear_terminal()
-                # Runs the FlashScan 
-                subprocess.run([sys.executable, "flashscan_scanner.py"])
+                run_subprocess_module("flashscan_scanner.py")
             elif sub_choice == "2":
-                clear_terminal()
-                subprocess.run([sys.executable, "normal_scanner.py"])
+                run_subprocess_module("normal_scanner.py")
             else:
                 print(f"{BOLD}{RED}[!] Invalid choice.{RESET}")
 
         elif choice == "3":
-            clear_terminal()
-            subprocess.run([sys.executable, "ip_domain_cleaner.py"])
+            run_subprocess_module("ip_domain_cleaner.py")
 
         elif choice == "4":
-            clear_terminal()
-            subprocess.run([sys.executable, "ip_generator.py"])
+            run_subprocess_module("ip_generator.py")
 
         elif choice == "5":
-            clear_terminal()
-            subprocess.run([sys.executable, "file_splitter.py"])
+            run_subprocess_module("file_splitter.py")
 
         elif choice == "6":
             update_scripts()
