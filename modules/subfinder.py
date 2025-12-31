@@ -122,7 +122,7 @@ async def main():
         return
 
     # Get Output File
-    output_filename = input(f"{BOLD}{LIGHT_GREEN}[?] Output Filename: {RESET}").strip()
+    output_filename = input(f"{BOLD}{LIGHT_GREEN}[?] Output Filename (default: Subfinder_Results.txt): {RESET}").strip() or "Subfinder_Results.txt"
     output_file = os.path.join(get_files_dir(), output_filename)
 
     # Initialize output file

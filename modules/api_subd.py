@@ -245,8 +245,7 @@ def find_subdomains():
 
     if not domains: return
 
-    fname = console.input("[green]Output Filename: [/green]").strip()
-    if not fname: return
+    fname = console.input("[green]Output Filename (default: API_Results): [/green]").strip() or "API_Results"
     
     output_file = os.path.join(get_files_dir(), f"{fname}.txt")
 

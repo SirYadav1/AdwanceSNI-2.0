@@ -6,6 +6,23 @@ from datetime import datetime
 import pytz
 import sys
 
+def setup_environment():
+    # Add Go binary paths to the current process PATH
+    home = os.path.expanduser("~")
+    go_paths = [
+        os.path.join(home, "go", "bin"),
+        os.path.join(home, ".go", "bin"),
+        "/usr/local/go/bin",
+        "/data/data/com.termux/files/usr/bin"
+    ]
+    
+    current_path = os.environ.get('PATH', '')
+    for path in go_paths:
+        if os.path.exists(path) and path not in current_path:
+            current_path += os.pathsep + path
+    
+    os.environ['PATH'] = current_path
+
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -85,8 +102,8 @@ def show_menu():
     {BOLD}{YELLOW}[2]{RESET} - Scan Hosts
     {BOLD}{YELLOW}[3]{RESET} - Extract IP/Domain
     {BOLD}{YELLOW}[4]{RESET} - Generate IPs
-    {BOLD}{YELLOW}[5]{RESET} - Update Tool
-    {BOLD}{YELLOW}[6]{RESET} - Split Files
+    {BOLD}{YELLOW}[5]{RESET} - Split Files
+    {BOLD}{YELLOW}[6]{RESET} - Update Tool
     {BOLD}{YELLOW}[7]{RESET} - Help
     {BOLD}{RED}[8]{RESET} - Exit
     {BOLD}{LIGHT_GREEN}=============================={RESET}
@@ -97,8 +114,8 @@ def show_subdomain_menu():
     # Subdomain  options
     menu = f"""
     {BOLD}{LIGHT_GREEN}=============================={RESET}
-    {BOLD}{YELLOW}[1]{RESET} - Use Subfinder (Fast)
-    {BOLD}{YELLOW}[2]{RESET} - Use API Scanner (Deep)
+    {BOLD}{YELLOW}[1]{RESET} - Use Subfinder
+    {BOLD}{YELLOW}[2]{RESET} - Use API Scanner
     {BOLD}{LIGHT_GREEN}=============================={RESET}
     """
     print(menu)
@@ -180,11 +197,11 @@ def main():
             subprocess.run([sys.executable, "ip_generator.py"])
 
         elif choice == "5":
-            update_scripts()
-
-        elif choice == "6":
             clear_terminal()
             subprocess.run([sys.executable, "file_splitter.py"])
+
+        elif choice == "6":
+            update_scripts()
 
         elif choice == "7":
             help_module()
@@ -198,4 +215,5 @@ def main():
             print(f"{BOLD}{RED}[!] Invalid option.{RESET}")
 
 if __name__ == "__main__":
+    setup_environment()
     main()

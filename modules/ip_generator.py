@@ -123,17 +123,20 @@ def main():
         if choice == "1":
             start_ip = get_valid_ip("Start IP: ")
             end_ip = get_valid_ip("End IP: ")
-            file_name = os.path.join(get_files_dir(), input("Output Filename: "))
+            out_name = input("Output Filename (default: Range_IPs.txt): ").strip() or "Range_IPs.txt"
+            file_name = os.path.join(get_files_dir(), out_name)
             generate_ips_from_range(start_ip, end_ip, file_name)
 
         elif choice == "2":
             cidr = input("CIDR: ")
-            file_name = os.path.join(get_files_dir(), input("Output Filename: "))
+            out_name = input("Output Filename (default: CIDR_IPs.txt): ").strip() or "CIDR_IPs.txt"
+            file_name = os.path.join(get_files_dir(), out_name)
             generate_ips_from_cidr(cidr, file_name)
 
         elif choice == "3":
             file_name = input("Input File Path: ")
-            output_file = os.path.join(get_files_dir(), input("Output Filename: "))
+            out_name = input("Output Filename (default: File_IPs.txt): ").strip() or "File_IPs.txt"
+            output_file = os.path.join(get_files_dir(), out_name)
             parse_file_for_cidr(file_name, output_file)
 
         elif choice == "4":
