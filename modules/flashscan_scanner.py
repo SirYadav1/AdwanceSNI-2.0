@@ -1,6 +1,25 @@
 import subprocess
 import os
 import threading
+import sys
+import platform
+
+def setup_environment():
+    # Add Go binary paths to the current process PATH
+    home = os.path.expanduser("~")
+    go_paths = [
+        os.path.join(home, "go", "bin"),
+        os.path.join(home, ".go", "bin"),
+        "/usr/local/go/bin",
+        "/data/data/com.termux/files/usr/bin"
+    ]
+    
+    current_path = os.environ.get('PATH', '')
+    for path in go_paths:
+        if os.path.exists(path) and path not in current_path:
+            current_path += os.pathsep + path
+    
+    os.environ['PATH'] = current_path
 
 # UI Colors
 RESET = "\033[0m"
@@ -55,10 +74,17 @@ def scan_subdomains_with_flashscan(input_file, output_file, threads):
     except subprocess.CalledProcessError as e:
         print(f"\n{BOLD}{RED}[!] Scan Error: {e}{RESET}")
     except FileNotFoundError:
-        print(f"\n{BOLD}{RED}[!] Error: 'flashscan-go' not installed.{RESET}")
-        print(f"{BOLD}{YELLOW}Run: go install github.com/SirYadav1/flashscan-go/v2@latest{RESET}")
+        # Try one more time with 'flashscan' instead of 'flashscan-go'
+        try:
+            cmd[0] = 'flashscan'
+            subprocess.run(cmd, check=True)
+            print(f"\n{BOLD}{GREEN}[+] Done! Saved to: {output_file}{RESET}")
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            print(f"\n{BOLD}{RED}[!] Error: 'flashscan-go' or 'flashscan' not found.{RESET}")
+            print(f"{BOLD}{YELLOW}Run: go install github.com/SirYadav1/flashscan-go/v2@latest{RESET}")
 
 def main():
+    setup_environment()
     display_banner()
     
     # Get input file
