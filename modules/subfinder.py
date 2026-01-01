@@ -6,6 +6,7 @@ import asyncio
 import random
 import aiofiles
 import platform
+import time
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 try:
@@ -62,8 +63,8 @@ def print_banner():
         print(f"{BOLD}{GREEN}║   - Memory: Unknown             ║{RESET}")
 
     print(f"{BOLD}{PURPLE}║ Optimized Configuration:      ║{RESET}")
-    print(f"{BOLD}{BLUE}║   - Workers: 5                ║{RESET}")
-    print(f"{BOLD}{RED}║   - Batch Size: 5             ║{RESET}")
+    print(f"{BOLD}{BLUE}║   - Workers: 3 (Safe Mode)    ║{RESET}")
+    print(f"{BOLD}{RED}║   - Batch Size: 3             ║{RESET}")
     print(f"{BOLD}{CYAN}╚═══════════════════════════════╝{RESET}")
 
 def get_system_resources():
@@ -75,10 +76,9 @@ def get_system_resources():
     return cpu_count, memory
 
 def calculate_optimal_config(cpu_count, memory):
-    workers = min(cpu_count * 2, 15)
-    if memory < 4:
-        workers = min(workers, 5)
-    batch_size = 5 if memory < 4 else 10
+    # Hardcoded safe limits to prevent OOM crashes on Termux
+    workers = 3
+    batch_size = 3
     return workers, batch_size
 
 async def read_domains(file_name):
@@ -88,7 +88,7 @@ async def read_domains(file_name):
 
 async def get_subdomains_subfinder(domain, output_file):
     try:
-        print(f"{BOLD}{YELLOW}Fetching subdomains for: {BLUE}{domain}{RESET}")
+        print(f"{BOLD}{YELLOW}Fetching subdomains for: {BLUE}{domain}{RESET}", flush=True)
         process = await asyncio.create_subprocess_exec(
             'subfinder', '-d', domain, '-silent',
             stdout=asyncio.subprocess.PIPE,
@@ -96,7 +96,7 @@ async def get_subdomains_subfinder(domain, output_file):
         )
         stdout, stderr = await process.communicate()
         if process.returncode != 0:
-            print(f"{BOLD}{RED}Error fetching subdomains for {domain}: {stderr.decode()}{RESET}")
+            print(f"{BOLD}{RED}Error for {domain}: {stderr.decode()}{RESET}", flush=True)
             return 0
         else:
             subdomains = stdout.decode().splitlines()
@@ -105,10 +105,10 @@ async def get_subdomains_subfinder(domain, output_file):
                 with open(output_file, 'a') as out_file:
                     for subdomain in clean_subdomains:
                         out_file.write(f"{subdomain}\n")
-            print(f"{BOLD}{GREEN}Subdomains saved for: {domain}{RESET}")
+            print(f"{BOLD}{GREEN}Saved for: {domain}{RESET}", flush=True)
             return len(clean_subdomains)
     except Exception as e:
-        print(f"{BOLD}{RED}Error fetching subdomains for {domain}: {e}{RESET}")
+        print(f"{BOLD}{RED}Exception for {domain}: {e}{RESET}", flush=True)
         return 0
 
 def batch_domains(domains, batch_size=20):
@@ -125,11 +125,6 @@ async def main():
     print_banner()
     cpu_count, memory = get_system_resources()
     workers, batch_size = calculate_optimal_config(cpu_count, memory)
-
-    # Use 5 workers default if psutil check failed logic
-    if not psutil:
-        workers = 5
-        batch_size = 5
 
     input_file = input(f"{BOLD}{LIGHT_GREEN}Enter Domain File: {RESET}").strip()
     if not os.path.isfile(input_file):
@@ -173,4 +168,6 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
     finally:
+        print(f"\n{BOLD}{YELLOW}[SYSTEM] Pausing for 2 seconds to ensure visibility...{RESET}")
+        time.sleep(2)
         input(f"\n{BOLD}{YELLOW}[SYSTEM] Press Enter to return to menu...{RESET}")
