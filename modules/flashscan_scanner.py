@@ -107,5 +107,8 @@ def main():
 
     scan_subdomains_with_flashscan(input_file, output_file, threads)
 
+    print(f"\n{BOLD}{YELLOW}[SYSTEM] Press Enter to return to menu...{RESET}")
+    input()
+
 if __name__ == "__main__":
     main()
