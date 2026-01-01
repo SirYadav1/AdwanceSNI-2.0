@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import subprocess
 import os
-import platform
 import time
 
 # Colors
@@ -17,77 +16,79 @@ def clear():
 
 def main():
     clear()
-    print(f"{BOLD}{CYAN}=== SUBFINDER (STABLE MODE) ==={RESET}")
+    print(f"{BOLD}{CYAN}=== SUBFINDER ==={RESET}")
     
     # 1. Input
     try:
-        input_file = input(f"{YELLOW}Enter Domain File: {RESET}").strip()
+        input_file = input(f"{YELLOW}[?] Enter Domain File: {RESET}").strip()
     except EOFError:
-        print("Input Error (EOF).")
         return
 
     if not os.path.isfile(input_file):
-        print(f"{RED}File not found.{RESET}")
+        print(f"{RED}[!] File not found.{RESET}")
         time.sleep(2)
         return
 
     # 2. Output
     try:
-        output_name = input(f"{YELLOW}Enter Output Name: {RESET}").strip()
+        output_name = input(f"{YELLOW}[?] Enter Output Name: {RESET}").strip()
     except EOFError:
         return
         
-    output_file = os.path.join(os.path.dirname(os.path.abspath(input_file)), output_name)
+    try:
+        input_dir = os.path.dirname(os.path.abspath(input_file))
+        output_file = os.path.join(input_dir, output_name)
+    except:
+        output_file = output_name
 
     # 3. Read
-    print(f"{CYAN}Reading domains...{RESET}")
+    print(f"\n{CYAN}[*] Reading domains...{RESET}")
     try:
         with open(input_file, 'r') as f:
             domains = [line.strip() for line in f if line.strip()]
     except Exception as e:
-        print(f"{RED}Error reading file: {e}{RESET}")
+        print(f"{RED}[!] Error reading file: {e}{RESET}")
         input("Press Enter...")
         return
 
-    print(f"{GREEN}Found {len(domains)} domains. Starting scan...{RESET}")
+    if not domains:
+        print(f"{RED}[!] No domains found in file.{RESET}")
+        time.sleep(2)
+        return
+
+    print(f"{GREEN}[+] Found {len(domains)} domains. Starting scan...{RESET}")
     time.sleep(1)
 
-    # 4. Scan (Sequential)
+    # 4. Scan
     count = 0
-    for domain in domains:
-        print(f"\n{YELLOW}>> Scanning: {domain}{RESET}")
+    total = len(domains)
+    
+    for i, domain in enumerate(domains, 1):
+        print(f"\n{YELLOW}[{i}/{total}] Scanning: {domain}{RESET}")
         try:
-            # Direct subprocess writing to file via appending in python
-            # Use 'subfinder' command directly
             cmd = ["subfinder", "-d", domain, "-silent"]
-            
-            # Run
             result = subprocess.run(cmd, capture_output=True, text=True, check=False)
             
             if result.returncode == 0 and result.stdout:
-                subs = result.stdout.strip().split('\n')
-                valid_subs = [s for s in subs if s.strip()]
-                if valid_subs:
+                subs = [s.strip() for s in result.stdout.split('\n') if s.strip()]
+                if subs:
                     with open(output_file, 'a') as f:
-                        for s in valid_subs:
+                        for s in subs:
                             f.write(s + '\n')
-                    print(f"{GREEN}[+] Found {len(valid_subs)} subdomains{RESET}")
-                    count += len(valid_subs)
+                    print(f"{GREEN}    -> Found: {len(subs)}{RESET}")
+                    count += len(subs)
                 else:
-                    print(f"{RED}[-] No results{RESET}")
+                    print(f"{RED}    -> No results{RESET}")
             else:
-                 print(f"{RED}[-] Failed or No Output{RESET}")
-                 if result.stderr:
-                     print(f"Error: {result.stderr.strip()}")
+                 print(f"{RED}    -> No results{RESET}")
 
         except Exception as e:
-            print(f"{RED}Error scanning {domain}: {e}{RESET}")
+            print(f"{RED}    -> Error: {e}{RESET}")
     
-    print(f"\n{BOLD}{GREEN}=== COMPLETED ==={RESET}")
-    print(f"Total Subdomains: {count}")
-    print(f"Saved to: {output_file}")
+    print(f"\n{BOLD}{GREEN}=== SCAN COMPLETED ==={RESET}")
+    print(f"{BOLD}Total Subdomains: {count}{RESET}")
+    print(f"{BOLD}Saved to: {output_file}{RESET}")
     
-    # FINAL PAUSE
     print(f"\n{BOLD}{YELLOW}[SYSTEM] Press Enter to return to menu...{RESET}")
     input()
 
@@ -97,6 +98,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nInterrupted.")
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        print(f"Error: {e}")
         input("Press Enter...")
