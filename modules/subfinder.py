@@ -195,8 +195,8 @@ async def main():
         print(f"{BOLD}{RED}Fatal Error During Scan: {e}{RESET}")
         debug_print(f"Exception: {e}")
 
-    # CRITICAL: Pause before returning to menu
-    input(f"\n{BOLD}{YELLOW}Scan complete. Press Enter to exit and return to menu...{RESET}")
+    # Pause logic moved to finally block in __main__
+    pass
 
 if __name__ == "__main__":
     try:
@@ -204,5 +204,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print(f"\n{BOLD}{RED}Interrupted by user.{RESET}")
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"\n{BOLD}{RED}Unexpected error: {e}{RESET}")
-        input(f"\n{BOLD}{YELLOW}Press Enter to exit...{RESET}")
+    finally:
+        input(f"\n{BOLD}{YELLOW}[SYSTEM] Press Enter to return to menu...{RESET}")

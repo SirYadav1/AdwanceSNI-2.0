@@ -159,6 +159,9 @@ def run_subprocess_module(script_name):
     try:
         # Run subprocess and wait for it to complete
         result = subprocess.run([sys.executable, os.path.join("modules", script_name)], check=False)
+        if result.returncode != 0:
+            print(f"\n{BOLD}{RED}[!] Module exited with error code: {result.returncode}{RESET}")
+            input(f"{BOLD}{YELLOW}Press Enter to return to menu...{RESET}")
     except KeyboardInterrupt:
         print(f"\n{BOLD}{YELLOW}[!] Interrupted by user{RESET}")
     except Exception as e:
