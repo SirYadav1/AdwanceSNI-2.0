@@ -1,173 +1,102 @@
 #!/usr/bin/env python3
 import subprocess
 import os
-import threading
-import asyncio
-import random
-import aiofiles
 import platform
 import time
-from datetime import datetime
-from concurrent.futures import ProcessPoolExecutor
-try:
-    import psutil
-except ImportError:
-    psutil = None
-import pytz
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 
-# Color definitions
+# Colors
 RESET = "\033[0m"
 BOLD = "\033[1m"
-LIGHT_GREEN = "\033[92m"
 RED = "\033[91m"
-BLUE = "\033[94m"
-SKY_BLUE = "\033[1;36m"
-YELLOW = "\033[93m"
 GREEN = "\033[32m"
-PURPLE = "\033[95m"
+YELLOW = "\033[93m"
 CYAN = "\033[96m"
-WHITE = "\033[97m"
-ORANGE = "\033[38;5;208m"
-PINK = "\033[38;5;206m"
 
-COLORS = [LIGHT_GREEN, RED, BLUE, YELLOW, GREEN, PURPLE, CYAN, WHITE, ORANGE, PINK]
+def clear():
+    os.system('cls' if os.name=='nt' else 'clear')
 
-write_lock = threading.Lock()
-
-def show_banner():
-    banner = """
-    ****************************************************
-╭━━━┳╮╱╭┳━━╮╭━━━┳━━┳━╮╱╭┳━━━┳━━━┳━━━╮
-┃╭━╮┃┃╱┃┃╭╮┃┃╭━━┻┫┣┫┃╰╮┃┣╮╭╮┃╭━━┫╭━╮┃
-┃╰━━┫┃╱┃┃╰╯╰┫╰━━╮┃┃┃╭╮╰╯┃┃┃┃┃╰━━┫╰━╯┃
-╰━━╮┃┃╱┃┃╭━╮┃╭━━╯┃┃┃┃╰╮┃┃┃┃┃┃╭━━┫╭╮╭╯
-┃╰━╯┃╰━╯┃╰━╯┃┃╱╱╭┫┣┫┃╱┃┃┣╯╰╯┃╰━━┫┃┃╰╮
-╰━━━┻━━━┻━━━┻╯╱╱╰━━┻╯╱╰━┻━━━┻━━━┻╯╰━╯
-    ****************************************************
-    """
-    print(f"{BOLD}{CYAN}{banner}{RESET}")
-    print(f"{BOLD}{GREEN}Fastest Subdomains Finder{RESET}")
-
-def print_banner():
-    print(f"{BOLD}{CYAN}╔═══════════════════════════════╗{RESET}")
-    print(f"{BOLD}{LIGHT_GREEN}║ System Resources Detected:    ║{RESET}")
+def main():
+    clear()
+    print(f"{BOLD}{CYAN}=== SUBFINDER (STABLE MODE) ==={RESET}")
     
-    cpu_cores = os.cpu_count() or 2
-    print(f"{BOLD}{YELLOW}║   - CPU Cores: {cpu_cores}              ║{RESET}")
-    
+    # 1. Input
     try:
-        memory = psutil.virtual_memory().total / (1024**3) if psutil else 4.0
-        print(f"{BOLD}{GREEN}║   - Memory: {memory:.2f} GB           ║{RESET}")
-    except:
-        print(f"{BOLD}{GREEN}║   - Memory: Unknown             ║{RESET}")
+        input_file = input(f"{YELLOW}Enter Domain File: {RESET}").strip()
+    except EOFError:
+        print("Input Error (EOF).")
+        return
 
-    print(f"{BOLD}{PURPLE}║ Optimized Configuration:      ║{RESET}")
-    print(f"{BOLD}{BLUE}║   - Workers: 3 (Safe Mode)    ║{RESET}")
-    print(f"{BOLD}{RED}║   - Batch Size: 3             ║{RESET}")
-    print(f"{BOLD}{CYAN}╚═══════════════════════════════╝{RESET}")
-
-def get_system_resources():
-    cpu_count = os.cpu_count() or 2
-    try:
-        memory = psutil.virtual_memory().total / (1024**3) if psutil else 4.0
-    except:
-        memory = 4.0
-    return cpu_count, memory
-
-def calculate_optimal_config(cpu_count, memory):
-    # Hardcoded safe limits to prevent OOM crashes on Termux
-    workers = 3
-    batch_size = 3
-    return workers, batch_size
-
-async def read_domains(file_name):
-    async with aiofiles.open(file_name, 'r') as file:
-        domains = await file.readlines()
-    return [domain.strip() for domain in domains if domain.strip()]
-
-async def get_subdomains_subfinder(domain, output_file):
-    try:
-        print(f"{BOLD}{YELLOW}Fetching subdomains for: {BLUE}{domain}{RESET}", flush=True)
-        process = await asyncio.create_subprocess_exec(
-            'subfinder', '-d', domain, '-silent',
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-        if process.returncode != 0:
-            print(f"{BOLD}{RED}Error for {domain}: {stderr.decode()}{RESET}", flush=True)
-            return 0
-        else:
-            subdomains = stdout.decode().splitlines()
-            clean_subdomains = [line.strip() for line in subdomains if line.strip()]
-            with write_lock:
-                with open(output_file, 'a') as out_file:
-                    for subdomain in clean_subdomains:
-                        out_file.write(f"{subdomain}\n")
-            print(f"{BOLD}{GREEN}Saved for: {domain}{RESET}", flush=True)
-            return len(clean_subdomains)
-    except Exception as e:
-        print(f"{BOLD}{RED}Exception for {domain}: {e}{RESET}", flush=True)
-        return 0
-
-def batch_domains(domains, batch_size=20):
-    total_domains = len(domains)
-    for i in range(0, total_domains, batch_size):
-        yield domains[i:i + batch_size]
-
-def get_output_file_path(input_file, output_filename):
-    input_dir = os.path.dirname(input_file)
-    output_file_path = os.path.join(input_dir, output_filename)
-    return output_file_path
-
-async def main():
-    print_banner()
-    cpu_count, memory = get_system_resources()
-    workers, batch_size = calculate_optimal_config(cpu_count, memory)
-
-    input_file = input(f"{BOLD}{LIGHT_GREEN}Enter Domain File: {RESET}").strip()
     if not os.path.isfile(input_file):
-        print(f"{BOLD}{RED}File not found. Please try again.{RESET}")
+        print(f"{RED}File not found.{RESET}")
+        time.sleep(2)
         return
 
-    output_filename = input(f"{BOLD}{LIGHT_GREEN}Enter Output file name to Save Subdomain: {RESET}").strip()
-    output_file = get_output_file_path(input_file, output_filename)
+    # 2. Output
+    try:
+        output_name = input(f"{YELLOW}Enter Output Name: {RESET}").strip()
+    except EOFError:
+        return
+        
+    output_file = os.path.join(os.path.dirname(os.path.abspath(input_file)), output_name)
 
-    with open(output_file, 'w') as f:
-        pass
+    # 3. Read
+    print(f"{CYAN}Reading domains...{RESET}")
+    try:
+        with open(input_file, 'r') as f:
+            domains = [line.strip() for line in f if line.strip()]
+    except Exception as e:
+        print(f"{RED}Error reading file: {e}{RESET}")
+        input("Press Enter...")
+        return
 
-    domains = await read_domains(input_file)
-    total_domains = len(domains)
+    print(f"{GREEN}Found {len(domains)} domains. Starting scan...{RESET}")
+    time.sleep(1)
+
+    # 4. Scan (Sequential)
+    count = 0
+    for domain in domains:
+        print(f"\n{YELLOW}>> Scanning: {domain}{RESET}")
+        try:
+            # Direct subprocess writing to file via appending in python
+            # Use 'subfinder' command directly
+            cmd = ["subfinder", "-d", domain, "-silent"]
+            
+            # Run
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            
+            if result.returncode == 0 and result.stdout:
+                subs = result.stdout.strip().split('\n')
+                valid_subs = [s for s in subs if s.strip()]
+                if valid_subs:
+                    with open(output_file, 'a') as f:
+                        for s in valid_subs:
+                            f.write(s + '\n')
+                    print(f"{GREEN}[+] Found {len(valid_subs)} subdomains{RESET}")
+                    count += len(valid_subs)
+                else:
+                    print(f"{RED}[-] No results{RESET}")
+            else:
+                 print(f"{RED}[-] Failed or No Output{RESET}")
+                 if result.stderr:
+                     print(f"Error: {result.stderr.strip()}")
+
+        except Exception as e:
+            print(f"{RED}Error scanning {domain}: {e}{RESET}")
     
-    if total_domains == 0:
-        print(f"{BOLD}{RED}No domains in file.{RESET}")
-        return
-
-    total_subdomains = 0
-    with Progress(
-        SpinnerColumn(),
-        BarColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        TextColumn("[progress.percentage]{task.completed}/{task.total}"),
-    ) as progress:
-        task = progress.add_task("[cyan]Processing Domains...", total=total_domains)
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            for domain_batch in batch_domains(domains, batch_size):
-                tasks = [get_subdomains_subfinder(domain, output_file) for domain in domain_batch]
-                results = await asyncio.gather(*tasks)
-                total_subdomains += sum(results)
-                progress.update(task, advance=len(domain_batch))
-    print(f"{BOLD}{LIGHT_GREEN}Subdomains have been saved in {output_file}.{RESET}")
-    print(f"{BOLD}{GREEN}Total Subdomains Found: {total_subdomains}{RESET}")
+    print(f"\n{BOLD}{GREEN}=== COMPLETED ==={RESET}")
+    print(f"Total Subdomains: {count}")
+    print(f"Saved to: {output_file}")
+    
+    # FINAL PAUSE
+    print(f"\n{BOLD}{YELLOW}[SYSTEM] Press Enter to return to menu...{RESET}")
+    input()
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        main()
+    except KeyboardInterrupt:
+        print("\nInterrupted.")
     except Exception as e:
         import traceback
         traceback.print_exc()
-    finally:
-        print(f"\n{BOLD}{YELLOW}[SYSTEM] Pausing for 2 seconds to ensure visibility...{RESET}")
-        time.sleep(2)
-        input(f"\n{BOLD}{YELLOW}[SYSTEM] Press Enter to return to menu...{RESET}")
+        input("Press Enter...")
