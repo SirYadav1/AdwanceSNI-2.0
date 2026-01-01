@@ -1,17 +1,16 @@
-import subprocess
+#!/usr/bin/env python3
 import os
 import threading
 import asyncio
 import random
 import aiofiles
 import platform
+import pytz
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
-import psutil
-import pytz
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 
-# --- UI COLORS (NEW UI) ---
+# Color definitions
 RESET = "\033[0m"
 BOLD = "\033[1m"
 LIGHT_GREEN = "\033[92m"
@@ -26,60 +25,85 @@ WHITE = "\033[97m"
 ORANGE = "\033[38;5;208m"
 PINK = "\033[38;5;206m"
 
-# Thread lock for safe file writing
+COLORS = [LIGHT_GREEN, RED, BLUE, YELLOW, GREEN, PURPLE, CYAN, WHITE, ORANGE, PINK]
+
 write_lock = threading.Lock()
 
-def get_files_dir():
-    # Returns the path to the 'files' directory
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    if os.path.basename(current_dir) == 'modules':
-        project_root = os.path.dirname(current_dir)
-    else:
-        project_root = current_dir
-    
-    files_dir = os.path.join(project_root, "files")
-    if not os.path.exists(files_dir):
-        os.makedirs(files_dir, exist_ok=True)
-    return files_dir
+# Debug mode
+DEBUG = True
 
-# --- BANNER (NEW UI) ---
-def print_banner():
-    print(f"{BOLD}{CYAN}╔═══════════════════════════════╗{RESET}")
-    print(f"{BOLD}{LIGHT_GREEN}║ System Stats:                 ║{RESET}")
-    print(f"{BOLD}{YELLOW}║   - CPU: {os.cpu_count()} Cores               ║{RESET}")
-    memory = psutil.virtual_memory().total / (1024**3)  # GB
-    print(f"{BOLD}{GREEN}║   - RAM: {memory:.2f} GB              ║{RESET}")
-    print(f"{BOLD}{PURPLE}║ Config:                       ║{RESET}")
-    print(f"{BOLD}{BLUE}║   - Workers: 5                ║{RESET}")
-    print(f"{BOLD}{RED}║   - Batch: 5                  ║{RESET}")
-    print(f"{BOLD}{CYAN}╚═══════════════════════════════╝{RESET}")
+def debug_print(message):
+    """Print debug messages if DEBUG is True"""
+    if DEBUG:
+        print(f"{BOLD}{CYAN}[DEBUG]{RESET} {message}")
 
-def get_system_resources():
-    # Checks CPU and Memory
-    cpu_count = os.cpu_count() or 2
-    memory = psutil.virtual_memory().total / (1024**3)
-    return cpu_count, memory
+def get_user_info_banner():
+    try:
+        os_info = platform.system()
+        
+        current_time = datetime.now()
+        date_str = current_time.strftime('%Y-%m-%d')
+        time_str = current_time.strftime('%H:%M:%S')
+        
+        try:
+            timezone = datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Z %z')
+            formatted_timezone = timezone[:-2] + ":" + timezone[-2:]
+        except:
+            formatted_timezone = "IST +05:30"
 
-def calculate_optimal_config(cpu_count, memory):
-    # Adjust performance based on system specs
-    workers = min(cpu_count * 2, 15)
-    if memory < 4:
-        workers = min(workers, 5)
-    batch_size = 5 if memory < 4 else 10
-    return workers, batch_size
+        country = "India"
+        total_width = 36
+
+        color = random.choice(COLORS)
+        banner = f"""
+    {BOLD}{color}╔{'═' * total_width}╗{RESET}
+    {BOLD}{color}║        USER INFORMATION            ║{RESET}
+    {BOLD}{color}╠{'═' * total_width}╣{RESET}
+    {BOLD}{color}║ OS       : {os_info.ljust(16)}        ║{RESET}
+    {BOLD}{color}║ Date     : {date_str.ljust(16)}        ║{RESET}
+    {BOLD}{color}║ Time     : {time_str.ljust(16)}        ║{RESET}
+    {BOLD}{color}║ Timezone : {formatted_timezone.ljust(16)}        ║{RESET}
+    {BOLD}{color}║ Country  : {country.ljust(16)}        ║{RESET}
+    {BOLD}{color}╚{'═' * total_width}╝{RESET}
+        """
+        print(banner)
+    except Exception as e:
+        debug_print(f"Banner error: {e}")
+
+def show_banner():
+    banner = f"""
+    ╔══════════════════════════════════╗
+    ║  Subdomain Finder & Scanner Tool ║
+    ╠══════════════════════════════════╣
+    ║ Coded by    : YADAV              ║
+    ║ Design by   : SONU               ║
+    ║ Telegram    : @SirYadav          ║
+    ║ Version     : 2.0.5              ║
+    ╚══════════════════════════════════╝
+    """
+    color = random.choice(COLORS)
+    print(f"{BOLD}{color}{banner}{RESET}")
+    get_user_info_banner()
+
+def clear_terminal():
+    try:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        show_banner()
+    except Exception as e:
+        print(f"{BOLD}{RED}[WARNING]{RESET} Unable to clear terminal. {e}")
 
 async def read_domains(file_name):
-    # Reads domains from  file 
-    async with aiofiles.open(file_name, 'r') as file:
-        domains = await file.readlines()
-    return [domain.strip() for domain in domains]
-
-# --- OLD LOGIC (No Binary Path Argument) ---
-async def get_subdomains_subfinder(domain, output_file):
-    # Runs subfinder for  single domain - REVERTED TO OLD LOGIC
+    debug_print(f"Reading domains from: {file_name}")
     try:
-        print(f"{BOLD}{YELLOW}[*] Fetching: {BLUE}{domain}{RESET}")
-        # OLD LOGIC: Direct call to 'subfinder' without path resolution
+        async with aiofiles.open(file_name, 'r') as file:
+            domains = await file.readlines()
+        return [domain.strip() for domain in domains if domain.strip()]
+    except Exception as e:
+        print(f"{BOLD}{RED}[ERROR] Failed to read file: {e}{RESET}")
+        return []
+
+async def get_subdomains_subfinder(domain, output_file):
+    try:
         process = await asyncio.create_subprocess_exec(
             'subfinder', '-d', domain, '-silent',
             stdout=asyncio.subprocess.PIPE,
@@ -88,74 +112,97 @@ async def get_subdomains_subfinder(domain, output_file):
         stdout, stderr = await process.communicate()
         
         if process.returncode != 0:
-            print(f"{BOLD}{RED}[!] Error: {stderr.decode()}{RESET}")
+            print(f"{BOLD}{RED}Error fetching subdomains for {domain}: {stderr.decode()}{RESET}")
             return 0
         else:
             subdomains = stdout.decode().splitlines()
             clean_subdomains = [line.strip() for line in subdomains if line.strip()]
-            
-            # Save results thread-safely
             with write_lock:
                 with open(output_file, 'a') as out_file:
                     for subdomain in clean_subdomains:
                         out_file.write(f"{subdomain}\n")
-            
-            print(f"{BOLD}{GREEN}[+] Saved results for: {domain}{RESET}")
             return len(clean_subdomains)
     except Exception as e:
-        print(f"{BOLD}{RED}[!] Exception: {e}{RESET}")
+        print(f"{BOLD}{RED}Error fetching subdomains for {BLUE}{domain}: {e}{RESET}")
         return 0
 
 def batch_domains(domains, batch_size=20):
-    # Generator for domain batches
     total_domains = len(domains)
     for i in range(0, total_domains, batch_size):
         yield domains[i:i + batch_size]
 
+def get_output_file_path(input_file, output_filename):
+    input_dir = os.path.dirname(os.path.abspath(input_file))
+    output_file_path = os.path.join(input_dir, output_filename)
+    return output_file_path
+
 async def main():
-    # --- NO setup_environment() CALL HERE ---
-    print_banner()
-    cpu_count, memory = get_system_resources()
-    workers, batch_size = calculate_optimal_config(cpu_count, memory)
-
-    # --- NO Binary Resolution Logic Here ---
-
-    # Get Input File
-    input_file = input(f"{BOLD}{LIGHT_GREEN}[?] Domain File: {RESET}").strip()
+    clear_terminal()
+    
+    # Input File
+    input_file = input(f"{BOLD}{LIGHT_GREEN}Enter Domain File: {RESET}").strip()
     if not os.path.isfile(input_file):
-        print(f"{BOLD}{RED}[!] File not found.{RESET}")
+        print(f"{BOLD}{RED}File not found. Please try again.{RESET}")
+        input(f"\n{BOLD}{YELLOW}Press Enter to exit...{RESET}")
         return
 
-    # Get Output File
-    output_filename = input(f"{BOLD}{LIGHT_GREEN}[?] Output Filename (default: Subfinder_Results.txt): {RESET}").strip() or "Subfinder_Results.txt"
-    output_file = os.path.join(get_files_dir(), output_filename)
+    # Output File
+    output_filename = input(f"{BOLD}{LIGHT_GREEN}Enter Output file name (default: Subdomains.txt): {RESET}").strip() or "Subdomains.txt"
+    output_file = get_output_file_path(input_file, output_filename)
+    
+    debug_print(f"Output Path: {output_file}")
 
     # Initialize output file
-    with open(output_file, 'w') as f:
-        pass
+    try:
+        with open(output_file, 'w') as f:
+            pass
+    except Exception as e:
+        print(f"{BOLD}{RED}Cannot create output file: {e}{RESET}")
+        input(f"\n{BOLD}{YELLOW}Press Enter to exit...{RESET}")
+        return
 
     domains = await read_domains(input_file)
     total_domains = len(domains)
-    total_subdomains = 0
     
-    # Show progress bar (NEW UI)
-    with Progress(
-        SpinnerColumn(),
-        BarColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        TextColumn("[progress.percentage]{task.completed}/{task.total} Domains"),
-    ) as progress:
-        task = progress.add_task("[cyan]Scanning...", total=total_domains)
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            for domain_batch in batch_domains(domains, batch_size):
-                # Call without binary_path
-                tasks = [get_subdomains_subfinder(domain, output_file) for domain in domain_batch]
-                results = await asyncio.gather(*tasks)
-                total_subdomains += sum(results)
-                progress.update(task, advance=len(domain_batch))
-                
-    print(f"{BOLD}{LIGHT_GREEN}[+] Saved to: {output_file}{RESET}")
-    print(f"{BOLD}{GREEN}[+] Total Subdomains: {total_subdomains}{RESET}")
+    if total_domains == 0:
+        print(f"{BOLD}{RED}No domains found in file.{RESET}")
+        input(f"\n{BOLD}{YELLOW}Press Enter to exit...{RESET}")
+        return
+
+    total_subdomains = 0
+    debug_print(f"Starting scan for {total_domains} domains")
+    
+    try:
+        with Progress(
+            SpinnerColumn(),
+            BarColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TextColumn("[progress.percentage]{task.completed}/{task.total} Domains"),
+        ) as progress:
+            task = progress.add_task("[cyan]Processing Domains...", total=total_domains)
+            
+            with ProcessPoolExecutor(max_workers=5) as executor:
+                for domain_batch in batch_domains(domains, batch_size=5):
+                    tasks = [get_subdomains_subfinder(domain, output_file) for domain in domain_batch]
+                    results = await asyncio.gather(*tasks)
+                    total_subdomains += sum(results)
+                    progress.update(task, advance=len(domain_batch))
+        
+        print(f"\n{BOLD}{LIGHT_GREEN}Subdomains have been saved in {output_file}.{RESET}")
+        print(f"{BOLD}{GREEN}Total Subdomains Found: {total_subdomains}{RESET}")
+        
+    except Exception as e:
+        print(f"{BOLD}{RED}Fatal Error During Scan: {e}{RESET}")
+        debug_print(f"Exception: {e}")
+
+    # CRITICAL: Pause before returning to menu
+    input(f"\n{BOLD}{YELLOW}Scan complete. Press Enter to exit and return to menu...{RESET}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print(f"\n{BOLD}{RED}Interrupted by user.{RESET}")
+    except Exception as e:
+        print(f"\n{BOLD}{RED}Unexpected error: {e}{RESET}")
+        input(f"\n{BOLD}{YELLOW}Press Enter to exit...{RESET}")
