@@ -51,6 +51,7 @@ fi
 
 # 2. Set Permissions
 chmod +x run.sh
+chmod +x main.py
 chmod +x modules/*.py 2>/dev/null
 
 # 3. Python Libs
