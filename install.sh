@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AdwanceSNI 2.0.4Installer
+# AdwanceSNI 2.0 Installer
 # (Termux, Linux, WSL)
 
 BOLD="\033[1m"
@@ -14,7 +14,7 @@ REPO_DIR="$HOME/AdwanceSNI-2.0"
 REPO_URL="https://github.com/SirYadav1/AdwanceSNI-2.0"
 
 echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
-echo -e "${BOLD}${GREEN}   AdwanceSNI 2.0.4Installer   ${RESET}"
+echo -e "${BOLD}${GREEN}   AdwanceSNI 2.0 Installer   ${RESET}"
 echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
 echo -e "${BOLD}${YELLOW}[*] Checking System...${RESET}"
 sleep 1
@@ -142,4 +142,4 @@ echo -e "${BOLD}${YELLOW}Type 'adwance' to start the tool from anywhere!${RESET}
 echo
 echo -e "${BOLD}${WHITE}Press [ENTER] to restart Termux session...${RESET}"
 read -r
-kill -9 $PPID 2>/dev/null || exit
+echo -e "${BOLD}${GREEN}Done! Run: adwance${RESET}"
