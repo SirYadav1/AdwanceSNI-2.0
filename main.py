@@ -39,24 +39,15 @@ WHITE = "\033[97m"
 ORANGE = "\033[38;5;208m"
 PINK = "\033[38;5;206m"
 
-# List of colors for random selection
 COLORS = [LIGHT_GREEN, RED, BLUE, YELLOW, GREEN, PURPLE, CYAN, WHITE, ORANGE, PINK]
 
 def get_user_info_banner():
-    # Gather system information
     os_info = platform.system()
-    
-    #current time and date
     current_time = datetime.now()
     date_str = current_time.strftime('%Y-%m-%d')
     time_str = current_time.strftime('%H:%M:%S')
-    
-    # Hardcoded timezone for India (Asia/Kolkata)
-    timezone = "IST +0530"
     formatted_timezone = "IST +05:30"
-
     country = "India"
-    
    
     color = random.choice(COLORS)
     banner = f"""
@@ -73,13 +64,11 @@ def get_user_info_banner():
     print(banner)
 
 def show_banner():
-    
     banner = f"""
     **************************************************
     *                                                *
     *            AdwanceSNI - Main Menu              *
-    *                  Version: 2.0.5                *
-    *           Last Updated: 01 Jan 2026            *
+    *                  Version: 2.0                  *
     *                                                *
     **************************************************
     """
@@ -88,7 +77,6 @@ def show_banner():
     get_user_info_banner()
 
 def clear_terminal():
-    
     try:
         os.system('cls' if os.name == 'nt' else 'clear')
         show_banner()
@@ -96,7 +84,6 @@ def clear_terminal():
         print(f"{BOLD}{RED}[!] Clear failed: {e}{RESET}")
 
 def show_menu():
-    
     menu = f"""
     {BOLD}{LIGHT_GREEN}=============================={RESET}
     {BOLD}{YELLOW}[1]{RESET} - Find Subdomains
@@ -112,7 +99,6 @@ def show_menu():
     print(menu)
 
 def show_subdomain_menu():
-    # Subdomain  options
     menu = f"""
     {BOLD}{LIGHT_GREEN}=============================={RESET}
     {BOLD}{YELLOW}[1]{RESET} - Use Subfinder
@@ -122,7 +108,6 @@ def show_subdomain_menu():
     print(menu)
 
 def show_scan_host_menu():
-    # Scanner options
     menu = f"""
     {BOLD}{LIGHT_GREEN}=============================={RESET}
     {BOLD}{YELLOW}[1]{RESET} - FlashScan (Recommended)
@@ -132,9 +117,13 @@ def show_scan_host_menu():
     print(menu)
 
 def update_scripts():
-   
     clear_terminal()
     try:
+        print(f"{BOLD}{YELLOW}[!] This will overwrite any local changes.{RESET}")
+        confirm = input(f"{BOLD}{YELLOW}Continue? (y/n): {RESET}").strip().lower()
+        if confirm != 'y':
+            print(f"{BOLD}{BLUE}[*] Update cancelled.{RESET}")
+            return
         print(f"{BOLD}{BLUE}[*] Updating...{RESET}")
         command = "git fetch --all && git reset --hard origin/main && git log -1 --pretty=format:\"%s%ncommit %H%nAuthor: %an%nDate: %ad\""
         subprocess.run(command, shell=True, check=True)
@@ -145,7 +134,6 @@ def update_scripts():
         print(f"{BOLD}{RED}[!] Error: {e}{RESET}")
 
 def help_module():
-   
     clear_terminal()
     try:
         print(f"{BOLD}{GREEN}[*] Opening help...{RESET}")
@@ -154,10 +142,8 @@ def help_module():
         print(f"{BOLD}{RED}[!] Failed to open help: {e}{RESET}")
 
 def run_subprocess_module(script_name):
-    """Helper function to run subprocess modules and wait for completion"""
     clear_terminal()
     try:
-        # Run subprocess and wait for it to complete
         result = subprocess.run([sys.executable, os.path.join("modules", script_name)], check=False)
         if result.returncode != 0:
             print(f"\n{BOLD}{RED}[!] Module exited with error code: {result.returncode}{RESET}")
@@ -167,11 +153,9 @@ def run_subprocess_module(script_name):
     except Exception as e:
         print(f"{BOLD}{RED}[!] Error running {script_name}: {e}{RESET}")
     finally:
-        # Always clear and redraw menu after subprocess completes
         clear_terminal()
 
 def main():
-    # Main program loop
     clear_terminal()
     while True:
         show_menu()
