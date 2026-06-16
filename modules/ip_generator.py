@@ -5,7 +5,6 @@ from tqdm import tqdm
 import logging
 import subprocess
 
-
 logging.basicConfig(filename='ip_generator.log', level=logging.DEBUG, format='%(asctime)s - %(message)s')
 
 def log_event(message):
