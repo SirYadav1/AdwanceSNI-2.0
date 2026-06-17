@@ -5,5 +5,5 @@ colorama
 tqdm
 aiohttp
 aiofiles
-psutil
 pytz
+psutil

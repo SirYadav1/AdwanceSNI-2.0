@@ -148,7 +148,8 @@ def help_module():
     clear_terminal()
     try:
         print(f"{BOLD}{GREEN}[*] Opening help...{RESET}")
-        subprocess.run(["bash", "help.sh"], check=True)
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        subprocess.run(["bash", os.path.join(module_dir, "help.sh")], check=True)
     except Exception as e:
         print(f"{BOLD}{RED}[!] Failed to open help: {e}{RESET}")
 
@@ -157,7 +158,8 @@ def run_subprocess_module(script_name):
     clear_terminal()
     try:
         # Run subprocess and wait for it to complete
-        result = subprocess.run([sys.executable, script_name], check=False)
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        result = subprocess.run([sys.executable, os.path.join(module_dir, script_name)], check=False)
     except KeyboardInterrupt:
         print(f"\n{BOLD}{YELLOW}[!] Interrupted by user{RESET}")
     except Exception as e:

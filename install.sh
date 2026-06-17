@@ -56,13 +56,22 @@ chmod +x modules/*.py 2>/dev/null
 
 # 3. Python Libs
 echo -e "${BOLD}${YELLOW}[*] Installing Python Libs...${RESET}"
-PIP_PACKAGES="requests beautifulsoup4 rich colorama tqdm aiohttp aiofiles psutil pytz"
+PIP_PACKAGES="requests beautifulsoup4 rich colorama tqdm aiohttp aiofiles pytz"
 
 # Attempt install with break-system-packages flag for newer envs
 if pip3 install $PIP_PACKAGES --break-system-packages > /dev/null 2>&1; then
     echo -e "${BOLD}${GREEN}[+] Libs Installed.${RESET}"
 else
     pip3 install $PIP_PACKAGES
+fi
+
+# psutil is optional (used for RAM detection in subfinder)
+# It may fail to build on Termux/Android, so install separately
+echo -e "${BOLD}${YELLOW}[*] Installing psutil (optional)...${RESET}"
+if pip3 install psutil --break-system-packages > /dev/null 2>&1 || pip3 install psutil > /dev/null 2>&1; then
+    echo -e "${BOLD}${GREEN}[+] psutil Installed.${RESET}"
+else
+    echo -e "${BOLD}${YELLOW}[!] psutil skipped (not critical, safe mode will be used).${RESET}"
 fi
 
 # 4. Go Setup

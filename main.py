@@ -137,14 +137,16 @@ def help_module():
     clear_terminal()
     try:
         print(f"{BOLD}{GREEN}[*] Opening help...{RESET}")
-        subprocess.run(["bash", "modules/help.sh"], check=True)
+        module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modules")
+        subprocess.run(["bash", os.path.join(module_dir, "help.sh")], check=True)
     except Exception as e:
         print(f"{BOLD}{RED}[!] Failed to open help: {e}{RESET}")
 
 def run_subprocess_module(script_name):
     clear_terminal()
     try:
-        result = subprocess.run([sys.executable, os.path.join("modules", script_name)], check=False)
+        module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modules")
+        result = subprocess.run([sys.executable, os.path.join(module_dir, script_name)], check=False)
         if result.returncode != 0:
             print(f"\n{BOLD}{RED}[!] Module exited with error code: {result.returncode}{RESET}")
             input(f"{BOLD}{YELLOW}Press Enter to return to menu...{RESET}")

@@ -9,6 +9,10 @@ YELLOW="\033[1;33m"
 CYAN="\033[1;36m"
 RESET="\033[0m"
 
+# Change to script's directory so main.py is found
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
+
 echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
 echo -e "${BOLD}${GREEN}      🚀 Starting AdwanceSNI 2.0 🚀          ${RESET}"
 echo -e "${BOLD}${CYAN}-------------------------------------------${RESET}"
