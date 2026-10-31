@@ -72,4 +72,4 @@ bash run.sh
 ### Contact
 
 - **Telegram:** [@SirYadav](https://t.me/SirYadav)
-- **Email:** [siryadav025@gmail.com](mailto:siryadav025@gmail.com)
+- **Email:** [sundramy807@gmail.com](mailto:sundramy807@gmail.com)
